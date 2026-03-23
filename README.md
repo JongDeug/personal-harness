@@ -32,12 +32,13 @@
 │   ├── QUALITY_SCORE.md         # 코드 품질 기준
 │   ├── RELIABILITY.md           # 안정성/모니터링 가이드
 │   └── SECURITY.md              # 보안 가이드라인
-├── aerospace/                   # AeroSpace 윈도우 매니저 설정
-├── tmux/                        # tmux 설정
-├── vscode/                      # VS Code 설정
-└── claude/
-    └── skills/
-        └── git-flow/            # Git 배포 플로우 자동화 스킬
+└── config/
+    ├── aerospace/               # AeroSpace 윈도우 매니저 설정
+    ├── tmux/                    # tmux 설정
+    ├── vscode/                  # VS Code 설정
+    └── claude/
+        └── skills/
+            └── git-flow/        # Git 배포 플로우 자동화 스킬
 ```
 
 ## 사용법
@@ -48,8 +49,8 @@
 
 ### 설정 파일
 
-각 설정 파일은 해당 도구의 설정 경로에 심링크하여 사용한다.
+`config/` 하위의 설정 파일들을 해당 도구의 설정 경로에 심링크하여 사용한다.
 
 ### Claude 스킬
 
-`claude/skills/` 하위의 스킬은 Claude Code에서 자동으로 인식된다.
+`config/claude/skills/` 하위의 스킬은 Claude Code에서 자동으로 인식된다.
