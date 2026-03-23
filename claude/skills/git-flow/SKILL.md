@@ -3,6 +3,7 @@ name: git-flow
 description: >
   Git 배포 플로우 자동화 스킬. 아래 커맨드 중 하나가 언급될 때 반드시 이 스킬을 사용한다.
   - /feat {issue-key} — feature 브랜치 생성
+  - /finish-feat {issue-key} — feature 작업 완료 후 push + PR 생성 (develop 대상)
   - /start-rc {version} — RC 브랜치 생성 및 동기화 확인
   - /rc-fix {issue-key} — RC 중 버그수정 브랜치 생성
   - /revert-issue {issue-key} — RC에서 특정 이슈 전체 revert
@@ -34,6 +35,29 @@ feature 브랜치를 생성한다. develop 최신화 후 분기.
 2. `git checkout develop && git pull origin develop`
 3. `git checkout -b feat/{issue-key}`
 4. 생성된 브랜치명과 다음 단계(작업 후 develop으로 PR) 안내
+
+---
+
+### `/finish-feat {issue-key}`
+
+feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
+
+1. 현재 브랜치가 `feat/{issue-key}`인지 확인. 아니면 에러 후 중단
+2. `git push origin feat/{issue-key}`
+3. 커밋 내역 분석:
+   ```
+   git log develop..HEAD --oneline
+   ```
+4. `.github/PULL_REQUEST_TEMPLATE.md` 존재 여부 확인
+   - **있으면**: 해당 파일을 읽어 템플릿 형식에 맞게 내용 채워서 PR 본문 작성
+   - **없으면**: 커밋 내역을 분석해 제목과 본문을 자유롭게 작성
+5. PR 생성:
+   ```
+   gh pr create --base develop --head feat/{issue-key} \
+     --title "..." \
+     --body "..."
+   ```
+6. 생성된 PR URL 출력
 
 ---
 
