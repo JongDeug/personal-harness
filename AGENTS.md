@@ -65,6 +65,22 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 3. **안전 우선** — 되돌리기 어려운 작업(force push, delete 등)은 반드시 확인
 4. **문서 참조** — 작업 전 관련 docs/ 문서가 있는지 확인
 
+### 필수 스킬 사용 규약
+
+아래 스킬은 해당 상황에서 **반드시** 사용한다. 스킬 상세는 각 `SKILL.md`를 참조.
+
+| 스킬 | 경로 | 사용 시점 |
+|------|------|-----------|
+| `/git-flow` | `config/skills/git-flow/SKILL.md` | 브랜치 생성, PR, 배포, 핫픽스 등 **모든 Git 플로우 작업** 시. 직접 git 명령을 실행하지 말고 반드시 스킬의 커맨드(`/feat`, `/finish-feat`, `/start-rc`, `/rc-fix`, `/revert-issue`, `/release`, `/hotfix`, `/finish-hotfix`)를 통해 진행 |
+| `/write-tests` | `config/skills/write-tests/SKILL.md` | **신규 기능 구현 또는 기존 코드 수정** 후 반드시 테스트 코드를 작성. 테스트 없이 PR을 올리지 않는다 |
+
+**작업 흐름 예시:**
+
+1. `/feat {issue-key}` → feature 브랜치 생성
+2. 기능 구현 또는 코드 수정
+3. `/write-tests` → 변경 사항에 대한 테스트 작성 및 통과 확인
+4. `/finish-feat {issue-key}` → push + PR 생성
+
 ### 프로젝트별 컨텍스트
 
 각 프로젝트 repo에 `CLAUDE.md`가 있으면 그것을 우선으로 따른다. 이 문서는 조직 수준의 기본값이다.
@@ -87,6 +103,8 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 | `docs/product-specs/` | 제품 스펙 모음 |
 | `docs/references/` | 외부 레퍼런스 모음 |
 | `docs/generated/` | 자동 생성 문서 |
+| `config/skills/git-flow/SKILL.md` | Git 배포 플로우 스킬 |
+| `config/skills/write-tests/SKILL.md` | 테스트 코드 작성 스킬 |
 
 ## 기술 스택 (기본값)
 
