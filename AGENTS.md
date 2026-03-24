@@ -14,7 +14,7 @@
 
 ### 요약
 
-- 변수/함수명: `camelCase` (JS/TS/Dart), `snake_case` (Python/Go)
+- 변수/함수명: `camelCase` (JS/TS/Dart/Go), `snake_case` (Python)
 - 클래스/타입명: `PascalCase`
 - 상수: `UPPER_SNAKE_CASE`
 - 파일명: **프레임워크별 규칙 우선** (NestJS: `auth.controller.ts`, React: `UserProfile.tsx`, Flutter: `user_profile.dart` 등)

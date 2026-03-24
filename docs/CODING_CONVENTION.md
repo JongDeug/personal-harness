@@ -15,8 +15,8 @@
 |------|------|------|------|
 | 파일명 | **프레임워크 규칙 우선** | 아래 프레임워크별 파일명 규칙 참조 | - |
 | 클래스명 | `PascalCase` | 명사형, 객체/역할의 실체를 표현 | `UserController`, `HttpClient` |
-| 함수명 | `camelCase` | 동사 + 목적어(명사) 패턴 | `getUserData()`, `sendEmail()` |
-| 변수명 | `camelCase` | 의미 있는 명사형, 줄임말 지양 | `userId`, `isActive`, `emailAddress` |
+| 함수명 | `camelCase` (Go 공개: `PascalCase`) | 동사 + 목적어(명사) 패턴 | `getUserData()`, `sendEmail()` |
+| 변수명 | `camelCase` (Go 공개: `PascalCase`) | 의미 있는 명사형, 줄임말 지양 | `userId`, `isActive`, `emailAddress` |
 | 전역 상수 | `UPPER_SNAKE_CASE` | 변하지 않는 고정 값 | `DEFAULT_TIMEOUT_MS`, `MAX_RETRY_COUNT` |
 
 ### 상세 규칙
