@@ -5,8 +5,10 @@
 ## 사용법
 
 ```
-/test-deploy {recipient@email.com}
+/test-deploy {recipient@email.com} {version}
 ```
+
+- `version`: 배포 버전/태그 (예: `v1.2.0`). 생략 시 최신 git 태그 자동 사용.
 
 ## 설치 가이드
 
@@ -38,7 +40,7 @@ MAIL_PASS=앱비밀번호16자리  # 공백 없이 붙여서 입력
 ### 4. 실행 테스트
 
 ```
-/test-deploy 본인이메일@gmail.com
+/test-deploy 수신자이메일@gmail.com v1.0.0
 ```
 
 메일이 수신되면 설치 완료입니다.
@@ -47,7 +49,7 @@ MAIL_PASS=앱비밀번호16자리  # 공백 없이 붙여서 입력
 
 | 항목 | 내용 |
 |------|------|
-| 제목 | `[project-name] Test Coverage Report · 2026. 3. 24.` |
+| 제목 | `[project-name] v1.0.0 · ✅ Passed · 10/10 tests · 2026. 3. 24.` |
 | 발신자 | `project-name CI <MAIL_USER>` |
 | 본문 | Summary 카드 (Stmts/Branch/Funcs/Lines) + 파일별 상세 테이블 |
 

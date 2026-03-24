@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Coverage 결과를 HTML 이메일로 발송하는 스크립트
- * Usage: node <skill-dir>/scripts/send-coverage-mail.mjs <recipient> <coverage-file> [project-name]
+ * Usage: node <skill-dir>/scripts/send-coverage-mail.mjs <recipient> <coverage-file> [project-name] [project-dir] [version]
  */
 
 import nodemailer from 'nodemailer';
@@ -18,9 +18,10 @@ const recipient = process.argv[2];
 const coverageFile = process.argv[3];
 const projectName = process.argv[4] || 'project';
 const projectDir = process.argv[5] || process.cwd();
+const version = process.argv[6] || 'untagged';
 
 if (!recipient || !coverageFile) {
-  console.error('Usage: node send-coverage-mail.mjs <recipient> <coverage-file> [project-name] [project-dir]');
+  console.error('Usage: node send-coverage-mail.mjs <recipient> <coverage-file> [project-name] [project-dir] [version]');
   process.exit(1);
 }
 
@@ -41,8 +42,8 @@ const coverageText = readFileSync(coverageFile, 'utf8');
 const rows = parseCoverage(coverageText);
 const summary = parseTestSummary(coverageText);
 
-const html = buildHtml(rows, summary, projectName);
-await sendMail(recipient, html, projectName, summary);
+const html = buildHtml(rows, summary, projectName, version);
+await sendMail(recipient, html, projectName, summary, version);
 
 // ── 테스트 요약 파싱 ───────────────────────────────────────────────────────
 function parseTestSummary(text) {
@@ -116,7 +117,7 @@ function pctBadge(val) {
   return `<span style="color:${pctColor(val)};font-weight:600">${val.toFixed(1)}%</span>`;
 }
 
-function buildHtml(rows, summary, projectName) {
+function buildHtml(rows, summary, projectName, version) {
   const total = rows.find(r => r.isTotal);
   const files = rows.filter(r => !r.isTotal);
   const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
@@ -199,7 +200,7 @@ function buildHtml(rows, summary, projectName) {
   <div style="max-width:680px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
     <div style="background:${headerBg};padding:28px 32px;color:#fff">
       <div style="font-size:22px;font-weight:700">${headerIcon} ${headerTitle}</div>
-      <div style="font-size:13px;opacity:0.85;margin-top:6px">${projectName} · ${now}</div>
+      <div style="font-size:13px;opacity:0.85;margin-top:6px">${projectName} · ${version} · ${now}</div>
     </div>
     <div style="padding:32px">
       ${heroCards}
@@ -211,7 +212,7 @@ function buildHtml(rows, summary, projectName) {
 }
 
 // ── 메일 발송 ─────────────────────────────────────────────────────────────
-async function sendMail(to, html, projectName, summary) {
+async function sendMail(to, html, projectName, summary, version) {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
@@ -226,7 +227,7 @@ async function sendMail(to, html, projectName, summary) {
   await transporter.sendMail({
     from: `"${projectName} CI" <${MAIL_USER}>`,
     to,
-    subject: `[${projectName}] ${status} · ${testCount} tests · ${now}`,
+    subject: `[${projectName}] ${version} · ${status} · ${testCount} tests · ${now}`,
     html,
   });
 

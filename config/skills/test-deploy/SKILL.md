@@ -10,8 +10,10 @@ description: >
 ## 사용법
 
 ```
-/test-deploy {recipient@email.com}
+/test-deploy {recipient@email.com} {version}
 ```
+
+- `version`: 배포 버전 또는 태그 (예: `v1.2.0`, `rc-3`). 생략 시 최신 git 태그를 자동으로 사용한다.
 
 ## 사전 요건
 
@@ -41,7 +43,29 @@ grep -E "MAIL_USER|MAIL_PASS" /home/jongdeug/.claude/skills/test-deploy/.env 2>/
 
 키가 없으면 스킬 디렉토리의 `.env` 파일에 추가하도록 안내 후 중단한다.
 
-### 2. 테스트 실행 및 coverage 캡처
+### 2. 태그 체크아웃
+
+```bash
+# 버전: 인자로 받은 값 또는 최신 git 태그
+VERSION={version}  # 인자가 없으면 아래 fallback
+if [ -z "$VERSION" ]; then
+  VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
+fi
+
+# 태그가 없으면 중단
+if [ -z "$VERSION" ]; then
+  echo "❌ git 태그가 존재하지 않습니다. 버전을 직접 지정해주세요: /test-deploy email version"
+  # 중단
+fi
+
+# 현재 브랜치 저장 후 태그로 체크아웃
+ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+git checkout "$VERSION"
+```
+
+태그가 존재하지 않으면 안내 후 중단한다.
+
+### 3. 테스트 실행 및 coverage 캡처
 
 ```bash
 # OS별 임시 파일 경로 생성 (프로젝트명 포함, Windows/Mac/Linux/WSL 모두 지원)
@@ -54,7 +78,15 @@ pnpm test:cov 2>&1 | tee "$TMPFILE" || pnpm jest --coverage 2>&1 | tee "$TMPFILE
 
 실패한 테스트가 있어도 계속 진행한다 (coverage 결과는 생성됨).
 
-### 3. 이메일 발송
+### 4. 원래 브랜치 복귀
+
+```bash
+git checkout "$ORIGINAL_BRANCH"
+```
+
+테스트 실행 후 반드시 원래 브랜치로 돌아온다.
+
+### 5. 이메일 발송
 
 스킬 디렉토리의 헬퍼 스크립트를 사용한다. `SKILL_DIR`은 이 SKILL.md가 위치한 디렉토리이다.
 
@@ -66,17 +98,18 @@ node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
   {recipient} \
   "$TMPFILE" \
   "$PROJECT_NAME" \
-  $(pwd)
+  $(pwd) \
+  "$VERSION"
 ```
 
 `{SKILL_DIR}`은 이 파일의 실제 절대 경로로 대체한다:
 `/home/jongdeug/.claude/skills/test-deploy`
 
-### 4. 완료 메시지 출력
+### 6. 완료 메시지 출력
 
 발송 성공 시:
 ```
-✅ Coverage 리포트 발송 완료 → recipient@email.com
+✅ Coverage 리포트 발송 완료 → recipient@email.com (태그: {version})
 ```
 
 ## 오류 처리
@@ -84,12 +117,14 @@ node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
 | 상황 | 대응 |
 |------|------|
 | MAIL_USER/MAIL_PASS 없음 | 설정 방법 안내 후 중단 |
-| 테스트 실패 | 실패 사실 알리고 coverage는 계속 발송 |
+| 태그가 존재하지 않음 | 버전 직접 지정 안내 후 중단 |
+| 태그 체크아웃 실패 | 오류 안내 후 중단 (원래 브랜치 유지) |
+| 테스트 실패 | 실패 사실 알리고 coverage는 계속 발송, 이후 원래 브랜치 복귀 |
 | SMTP 인증 실패 | 앱 비밀번호 확인 안내 |
 | coverage 파싱 실패 | 테스트 출력 형식 확인 안내 |
 
 ## 메일 내용
 
-- **제목**: `[{project-name}] Test Coverage Report · {날짜}`
+- **제목**: `[{project-name}] {version} · ✅ Passed · 10/10 tests · {날짜}`
 - **본문**: Summary 카드 (Stmts/Branch/Funcs/Lines 전체 %) + 파일별 상세 테이블
 - **색상**: 녹색(≥80%), 노란색(60-79%), 빨간색(<60%)
