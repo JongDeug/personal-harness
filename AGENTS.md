@@ -10,15 +10,19 @@
 
 ## 코드 컨벤션
 
-### 공통
+상세 컨벤션은 [`docs/CODING_CONVENTION.md`](docs/CODING_CONVENTION.md)를 참조한다.
 
-- 언어/프레임워크별 공식 스타일 가이드를 기본으로 따른다
+### 요약
+
 - 변수/함수명: `camelCase` (JS/TS/Dart), `snake_case` (Python/Go)
 - 클래스/타입명: `PascalCase`
 - 상수: `UPPER_SNAKE_CASE`
-- 파일명: `kebab-case` (컴포넌트 파일은 `PascalCase` 허용)
-- 들여쓰기: 2 spaces (JS/TS/HTML/CSS/YAML), 4 spaces (Python)
-- 최대 줄 길이: 100자 권장, 120자 하드 리밋
+- 파일명: **프레임워크별 규칙 우선** (NestJS: `auth.controller.ts`, React: `UserProfile.tsx`, Flutter: `user_profile.dart` 등)
+- 들여쓰기: 2 spaces (JS/TS/HTML/CSS/YAML/Dart), 4 spaces (Python/Go)
+- 최대 줄 길이: 150자
+- 문자열: 작은따옴표(`'`) 사용
+- 테스트: Given-When-Then 주석 패턴
+- Lint: ESLint + Prettier 필수
 
 ### 커밋 메시지
 
@@ -70,6 +74,7 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 | 문서 | 용도 |
 |------|------|
 | `ARCHITECTURE.md` | 기술 아키텍처 개요 |
+| `docs/CODING_CONVENTION.md` | 코딩 컨벤션 상세 |
 | `docs/DESIGN.md` | 디자인 시스템 가이드 |
 | `docs/FRONTEND.md` | 프론트엔드 개발 가이드 |
 | `docs/SECURITY.md` | 보안 가이드라인 |
