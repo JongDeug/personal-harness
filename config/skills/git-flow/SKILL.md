@@ -173,33 +173,33 @@ RC를 PR을 통해 main과 develop에 머지하고 배포 태그를 생성한다
    - RC 버전에서 `{major}.{minor}` 파싱
    - `minor +1`, `hotfix=0`, `test=0` → `release_version = {major}.{minor+1}.0.0`
    - 사용자에게 배포 태그 버전 확인 요청: "배포 태그는 `{release_version}`으로 생성됩니다. 계속할까요?"
-4. **main으로 PR 생성:**
+4. **RC 브랜치에서 package.json 버전 업데이트 및 태그 생성:**
+   ```
+   git checkout rc/{version} && git pull origin rc/{version}
+   npm pkg set version={release_version}
+   git add package.json
+   git commit -m "[chore]: 버전 {release_version}으로 업데이트"
+   git tag {release_version}
+   git push origin rc/{version}
+   git push origin {release_version}
+   ```
+   (예: `2.2.0.0`)
+5. **main으로 PR 생성:**
    ```
    gh pr create --base main --head rc/{version} \
      --title "release: {release_version}" \
      --body "RC {version} → main 배포 (태그: {release_version})"
    ```
-5. PR URL 출력 후 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
-6. **머지 확인 후 package.json 버전 업데이트 및 배포 태깅:**
-   ```
-   git checkout main && git pull origin main
-   npm pkg set version={release_version}
-   git add package.json
-   git commit -m "[chore]: 버전 {release_version}으로 업데이트"
-   git push origin main
-   git tag {release_version}
-   git push origin {release_version}
-   ```
-   (예: `2.2.0.0`)
+6. PR URL 출력 후 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
 7. **develop으로 PR 생성 (동기화):**
    ```
    gh pr create --base develop --head rc/{version} \
      --title "chore: merge rc/{version} into develop" \
-     --body "release {version} 배포 후 develop 동기화"
+     --body "release {release_version} 배포 후 develop 동기화"
    ```
-7. PR URL 출력 후 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
-8. 최종 `git fetch origin && git diff origin/develop origin/main` 동기화 확인
-9. 배포 완료 메시지 출력
+8. PR URL 출력 후 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
+9. 최종 `git fetch origin && git diff origin/develop origin/main` 동기화 확인
+10. 배포 완료 메시지 출력
 
 ---
 
