@@ -1,9 +1,1 @@
-{
-  "name": "test-deploy-skill",
-  "type": "module",
-  "private": true,
-  "dependencies": {
-    "dotenv": "^17.0.0",
-    "nodemailer": "^8.0.0"
-  }
-}
+../../config/skills/test-deploy/package.json
