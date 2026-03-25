@@ -4,7 +4,7 @@ description: >
   Git 배포 플로우 자동화 스킬. 아래 커맨드 중 하나가 언급될 때 반드시 이 스킬을 사용한다.
   - /feat {issue-key} — feature 브랜치 생성
   - /finish-feat {issue-key} — feature 작업 완료 후 push + PR 생성 (develop 대상)
-  - /start-rc {version} — RC 브랜치 생성 및 동기화 확인
+  - /start-rc — RC 브랜치 생성 (버전은 main 최신 태그 자동 감지)
   - /rc-fix {issue-key} — RC 중 버그수정 브랜치 생성
   - /revert-issue {issue-key} — RC에서 특정 이슈 전체 revert
   - /release {version} — 배포 (main merge + 태깅 + develop sync)
@@ -61,24 +61,40 @@ feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
 
 ---
 
-### `/start-rc {version}`
+### `/start-rc`
 
-배포 준비 RC 브랜치를 생성하고 리모트에 push한다. develop과 main이 동기화되어 있는지 먼저 확인.
+배포 준비 RC 브랜치를 생성하고 리모트에 push한다.
+
+**RC 브랜치 버전은 현재 main의 최신 태그를 자동으로 사용한다.**
+이는 "어떤 main 버전 위에서 QA를 진행하는지" 기록하기 위한 용도이다.
+(예: main 최신 태그 `1.10.0.0` → RC 브랜치 `rc/1.10.0.0`)
 
 1. `git fetch origin`
-2. `git diff origin/develop origin/main` 실행
+2. **main 최신 태그 자동 감지:**
+   ```
+   git tag --list --sort=-v:refname | head -1
+   ```
+   감지된 버전을 `{version}`으로 사용. 태그가 없으면 에러 후 중단.
+3. `git diff origin/develop origin/main` 실행
    - 차이가 있으면 diff 내용 출력 후 "계속 진행할까요?" 확인 요청
    - 차이 없으면 그냥 진행
-3. `git checkout develop && git pull origin develop`
-4. `git checkout -b rc/{version}`
-5. `git push origin rc/{version}`
-6. **초기 버전 태그 생성:**
+4. `git checkout develop && git pull origin develop`
+5. `git checkout -b rc/{version}`
+6. `git push origin rc/{version}`
+7. **package.json 버전 업데이트 및 커밋:**
+   ```
+   npm pkg set version={version}
+   git add package.json
+   git commit -m "[chore]: 버전 {version}으로 업데이트"
+   git push origin rc/{version}
+   ```
+8. **초기 버전 태그 생성:**
    ```
    git tag {version}
    git push origin {version}
    ```
-   (예: `rc/2.1.0.0` → 태그 `2.1.0.0`)
-7. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
+   (예: `rc/1.10.0.0` → 태그 `1.10.0.0`)
+9. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
 
 ---
 
@@ -107,9 +123,17 @@ RC 테스트 중 버그 발견 시 수정 브랜치를 생성하고, 머지 후 
    git checkout rc/{version} && git pull origin rc/{version}
    # 현재 RC에 해당하는 최신 태그의 test 번호 조회
    git tag --list "{major}.{minor}.{hotfix}.*" --sort=-v:refname | head -1
-   # test 번호 +1 하여 새 태그 생성
-   git tag {major}.{minor}.{hotfix}.{test+1}
-   git push origin {major}.{minor}.{hotfix}.{test+1}
+   # test 번호 +1 하여 새 버전 계산
+   NEW_VERSION={major}.{minor}.{hotfix}.{test+1}
+   ```
+   **package.json 버전 업데이트 및 커밋:**
+   ```
+   npm pkg set version=$NEW_VERSION
+   git add package.json
+   git commit -m "[chore]: 버전 $NEW_VERSION으로 업데이트"
+   git push origin rc/{version}
+   git tag $NEW_VERSION
+   git push origin $NEW_VERSION
    ```
    (예: 최신 태그 `2.1.0.1` → 새 태그 `2.1.0.2`)
 9. 새 태그명 출력
@@ -156,9 +180,13 @@ RC를 PR을 통해 main과 develop에 머지하고 배포 태그를 생성한다
      --body "RC {version} → main 배포 (태그: {release_version})"
    ```
 5. PR URL 출력 후 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
-6. **머지 확인 후 배포 태깅:**
+6. **머지 확인 후 package.json 버전 업데이트 및 배포 태깅:**
    ```
    git checkout main && git pull origin main
+   npm pkg set version={release_version}
+   git add package.json
+   git commit -m "[chore]: 버전 {release_version}으로 업데이트"
+   git push origin main
    git tag {release_version}
    git push origin {release_version}
    ```
