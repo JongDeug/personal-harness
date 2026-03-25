@@ -91,3 +91,14 @@ claude plugin install write-tests@personal-harness
 
 > `test-deploy` 사용 시 `.env`에 Gmail 앱 비밀번호 설정 필요 (`GMAIL_USER`, `GMAIL_APP_PASSWORD`)
 > `obsidian` 사용 시 Obsidian 데스크탑 앱의 CLI 기능이 활성화되어 있어야 함
+
+### Windows에서 clone 시 참고
+
+`plugins/` 디렉토리의 파일들은 `config/skills/`로의 심링크이다. Windows에서 심링크가 정상 동작하려면:
+
+1. **개발자 모드 활성화**: 설정 > 개발자용 > 개발자 모드 ON
+2. **Git 심링크 설정**:
+   ```bash
+   git config --global core.symlinks true
+   ```
+3. 이후 `git clone` 하면 심링크가 정상 복원된다.
