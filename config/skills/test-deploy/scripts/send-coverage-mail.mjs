@@ -200,7 +200,15 @@ function buildHtml(rows, summary, projectName, version) {
   <div style="max-width:680px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
     <div style="background:${headerBg};padding:28px 32px;color:#fff">
       <div style="font-size:22px;font-weight:700">${headerIcon} ${headerTitle}</div>
-      <div style="font-size:13px;opacity:0.85;margin-top:6px">${projectName} · ${version} · ${now}</div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;opacity:0.85">${projectName}</span>
+        <span style="opacity:0.4">·</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.45);border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;letter-spacing:0.04em">
+          🏷️ ${version}
+        </span>
+        <span style="opacity:0.4">·</span>
+        <span style="font-size:12px;opacity:0.75">${now}</span>
+      </div>
     </div>
     <div style="padding:32px">
       ${heroCards}
@@ -227,7 +235,7 @@ async function sendMail(to, html, projectName, summary, version) {
   await transporter.sendMail({
     from: `"${projectName} CI" <${MAIL_USER}>`,
     to,
-    subject: `[${projectName}] ${version} · ${status} · ${testCount} tests · ${now}`,
+    subject: `[${projectName}] 🏷️ ${version} · ${status} · ${testCount} tests · ${now}`,
     html,
   });
 
