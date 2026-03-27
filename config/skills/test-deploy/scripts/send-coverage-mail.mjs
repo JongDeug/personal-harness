@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
  * Coverage 결과를 HTML 이메일로 발송하는 스크립트
- * Usage: node <skill-dir>/scripts/send-coverage-mail.mjs <recipient> <coverage-file> [project-name] [project-dir] [version]
+ *
+ * Usage:
+ *   node send-coverage-mail.mjs --to <email> --project <name> --dir <path> --version <ver> [--back <file>] [--front <file>]
+ *
+ * 최소 --back 또는 --front 중 하나는 필수.
  */
 
 import nodemailer from 'nodemailer';
@@ -13,15 +17,33 @@ import * as dotenv from 'dotenv';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const skillDir = resolve(__dirname, '..');
 
-// node_modules는 스킬 디렉토리 기준으로 로드
-const recipient = process.argv[2];
-const coverageFile = process.argv[3];
-const projectName = process.argv[4] || 'project';
-const projectDir = process.argv[5] || process.cwd();
-const version = process.argv[6] || 'untagged';
+// ── CLI 파싱 ──────────────────────────────────────────────────────────────
+function parseArgs(argv) {
+  const args = {};
+  for (let i = 2; i < argv.length; i++) {
+    if (argv[i].startsWith('--') && i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
+      args[argv[i].slice(2)] = argv[i + 1];
+      i++;
+    }
+  }
+  return args;
+}
 
-if (!recipient || !coverageFile) {
-  console.error('Usage: node send-coverage-mail.mjs <recipient> <coverage-file> [project-name] [project-dir] [version]');
+const args = parseArgs(process.argv);
+const recipient = args.to;
+const projectName = args.project || 'project';
+const projectDir = args.dir || process.cwd();
+const version = args.version || 'untagged';
+const backFile = args.back;
+const frontFile = args.front;
+
+if (!recipient) {
+  console.error('Usage: node send-coverage-mail.mjs --to <email> --project <name> --dir <path> --version <ver> [--back <file>] [--front <file>]');
+  process.exit(1);
+}
+
+if (!backFile && !frontFile) {
+  console.error('❌ --back 또는 --front 중 하나 이상의 coverage 파일을 지정해주세요.');
   process.exit(1);
 }
 
@@ -38,18 +60,53 @@ if (!MAIL_USER || !MAIL_PASS) {
   process.exit(1);
 }
 
-const coverageText = readFileSync(coverageFile, 'utf8');
-const rows = parseCoverage(coverageText);
-const summary = parseTestSummary(coverageText);
+// ── 섹션별 파싱 ────────────────────────────────────────────────────────────
+const sections = [];
 
-const html = buildHtml(rows, summary, projectName, version);
-await sendMail(recipient, html, projectName, summary, version);
+if (backFile) {
+  const text = readFileSync(backFile, 'utf8');
+  sections.push({ label: 'Backend', coverage: parseCoverage(text), summary: parseTestSummary(text) });
+}
+
+if (frontFile) {
+  const text = readFileSync(frontFile, 'utf8');
+  sections.push({ label: 'Frontend', coverage: parseCoverage(text), summary: parseTestSummary(text) });
+}
+
+const mergedSummary = mergeSummaries(sections.map(s => s.summary));
+const html = buildHtml(sections, mergedSummary, projectName, version);
+await sendMail(recipient, html, projectName, mergedSummary, version);
+
+// ── 요약 병합 ──────────────────────────────────────────────────────────────
+function mergeSummaries(summaries) {
+  const merged = { suites: 0, suitesTotal: 0, tests: 0, testsTotal: 0, failed: 0, time: '0s', allPassed: true };
+  let totalSeconds = 0;
+
+  for (const s of summaries) {
+    merged.suites += s.suites;
+    merged.suitesTotal += s.suitesTotal;
+    merged.tests += s.tests;
+    merged.testsTotal += s.testsTotal;
+    merged.failed += s.failed;
+    if (!s.allPassed) merged.allPassed = false;
+    const timeMatch = s.time.match(/([\d.]+)/);
+    if (timeMatch) totalSeconds += parseFloat(timeMatch[1]);
+  }
+
+  merged.time = `${totalSeconds.toFixed(1)}s`;
+  return merged;
+}
 
 // ── 테스트 요약 파싱 ───────────────────────────────────────────────────────
 function parseTestSummary(text) {
   const summary = { suites: 0, suitesTotal: 0, tests: 0, testsTotal: 0, failed: 0, time: '0s', allPassed: true };
 
-  const suitesMatch = text.match(/Test Suites:\s+(?:(\d+) failed,\s+)?(\d+) passed,\s+(\d+) total/);
+  // Jest:   "Test Suites: 1 failed, 22 passed, 23 total"
+  // Vitest: "Test Files  24 passed (24)"  or  "Test Files  1 failed | 23 passed (24)"
+  const jestSuitesMatch = text.match(/Test Suites:\s+(?:(\d+) failed,\s+)?(\d+) passed,\s+(\d+) total/);
+  const vitestSuitesMatch = text.match(/Test Files\s+(?:(\d+) failed\s*\|\s*)?(\d+) passed\s*\((\d+)\)/);
+  const suitesMatch = jestSuitesMatch || vitestSuitesMatch;
+
   if (suitesMatch) {
     summary.suites = parseInt(suitesMatch[2]);
     summary.suitesTotal = parseInt(suitesMatch[3]);
@@ -59,22 +116,31 @@ function parseTestSummary(text) {
     }
   }
 
-  const testsMatch = text.match(/Tests:\s+(?:(\d+) failed,\s+)?(\d+) passed,\s+(\d+) total/);
+  // Jest:   "Tests: 1 failed, 310 passed, 311 total"
+  // Vitest: "Tests  91 passed (91)"  or  "Tests  2 failed | 89 passed (91)"
+  const jestTestsMatch = text.match(/Tests:\s+(?:(\d+) failed,\s+)?(\d+) passed,\s+(\d+) total/);
+  const vitestTestsMatch = text.match(/Tests\s+(?:(\d+) failed\s*\|\s*)?(\d+) passed\s*\((\d+)\)/);
+  const testsMatch = jestTestsMatch || vitestTestsMatch;
+
   if (testsMatch) {
     summary.tests = parseInt(testsMatch[2]);
     summary.testsTotal = parseInt(testsMatch[3]);
-    if (testsMatch[1]) summary.failed += parseInt(testsMatch[1]);
+    if (testsMatch[1]) {
+      summary.failed += parseInt(testsMatch[1]);
+      summary.allPassed = false;
+    }
   }
 
-  const timeMatch = text.match(/Time:\s+([\d.]+\s*s)/);
+  // Jest:   "Time:  6.589 s"
+  // Vitest: "Duration  5.69s (transform ...)"
+  const timeMatch = text.match(/Time:\s+([\d.]+\s*s)/) || text.match(/Duration\s+([\d.]+s)/);
   if (timeMatch) summary.time = timeMatch[1];
 
   return summary;
 }
 
-// ── 커버리지 파싱 ─────────────────────────────────────────────────────────
+// ── 커버리지 파싱 ("All files" 총합 행만 추출) ─────────────────────────────
 function parseCoverage(text) {
-  const rows = [];
   const lines = text.split('\n');
   let separatorCount = 0;
 
@@ -83,26 +149,18 @@ function parseCoverage(text) {
       separatorCount++;
       continue;
     }
-    // 데이터는 2번째 구분선(헤더 뒤) ~ 3번째 구분선(테이블 끝) 사이
     if (separatorCount !== 2) continue;
 
     const parts = line.split('|').map(p => p.trim()).filter(Boolean);
     if (parts.length < 5) continue;
 
     const [file, stmts, branch, funcs, lines_] = parts;
-    if (!stmts || isNaN(parseFloat(stmts))) continue;
+    if (file.trim().toLowerCase() !== 'all files') continue;
 
-    rows.push({
-      file: file.trim(),
-      stmts: parseFloat(stmts),
-      branch: parseFloat(branch),
-      funcs: parseFloat(funcs),
-      lines: parseFloat(lines_),
-      isTotal: file.trim().toLowerCase() === 'all files',
-    });
+    return { stmts: parseFloat(stmts), branch: parseFloat(branch), funcs: parseFloat(funcs), lines: parseFloat(lines_) };
   }
 
-  return rows;
+  return null;
 }
 
 // ── HTML 빌드 ─────────────────────────────────────────────────────────────
@@ -117,82 +175,66 @@ function pctBadge(val) {
   return `<span style="color:${pctColor(val)};font-weight:600">${val.toFixed(1)}%</span>`;
 }
 
-function buildHtml(rows, summary, projectName, version) {
-  const total = rows.find(r => r.isTotal);
-  const files = rows.filter(r => !r.isTotal);
+function buildSectionHtml(section) {
+  const { label, coverage, summary } = section;
+
+  const statusIcon = summary.allPassed ? '✅' : '❌';
+  const statusText = summary.allPassed ? 'Passed' : 'Failed';
+  const statusColor = summary.allPassed ? '#16a34a' : '#dc2626';
+
+  const sectionHeader = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700;color:#111827">${label}</div>
+      <span style="font-size:12px;color:${statusColor};font-weight:600">${statusIcon} ${summary.tests}/${summary.testsTotal} tests ${statusText}</span>
+      <span style="font-size:12px;color:#9ca3af">${summary.time}</span>
+    </div>`;
+
+  const coverageSummary = coverage ? `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${[['Stmts', coverage.stmts], ['Branch', coverage.branch], ['Funcs', coverage.funcs], ['Lines', coverage.lines]].map(([l, v]) => `
+        <div style="flex:1;min-width:70px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:${pctColor(v)}">${v.toFixed(1)}%</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">${l}</div>
+        </div>`).join('')}
+    </div>` : '';
+
+  return `${sectionHeader}${coverageSummary}`;
+}
+
+function buildHtml(sections, mergedSummary, projectName, version) {
   const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
-  const headerBg = summary.allPassed ? '#16a34a' : '#dc2626';
-  const headerIcon = summary.allPassed ? '✅' : '❌';
-  const headerTitle = summary.allPassed ? 'All Tests Passed' : 'Tests Failed';
+  const headerBg = mergedSummary.allPassed ? '#16a34a' : '#dc2626';
+  const headerIcon = mergedSummary.allPassed ? '✅' : '❌';
+  const headerTitle = mergedSummary.allPassed ? 'All Tests Passed' : 'Tests Failed';
 
-  // ── 히어로 카드 ──
+  const isBothSections = sections.length > 1;
+
+  // ── 히어로 카드 (전체 합산) ──
   const heroCards = `
     <div style="display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap">
-      <div style="flex:2;min-width:160px;background:${summary.allPassed ? '#f0fdf4' : '#fef2f2'};border:1px solid ${summary.allPassed ? '#bbf7d0' : '#fecaca'};border-radius:12px;padding:20px;text-align:center">
-        <div style="font-size:36px;font-weight:800;color:${summary.allPassed ? '#16a34a' : '#dc2626'}">${summary.tests}</div>
+      <div style="flex:2;min-width:160px;background:${mergedSummary.allPassed ? '#f0fdf4' : '#fef2f2'};border:1px solid ${mergedSummary.allPassed ? '#bbf7d0' : '#fecaca'};border-radius:12px;padding:20px;text-align:center">
+        <div style="font-size:36px;font-weight:800;color:${mergedSummary.allPassed ? '#16a34a' : '#dc2626'}">${mergedSummary.tests}</div>
         <div style="font-size:13px;color:#6b7280;margin-top:4px">Tests Passed</div>
       </div>
-      ${summary.failed > 0 ? `
+      ${mergedSummary.failed > 0 ? `
       <div style="flex:2;min-width:160px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;text-align:center">
-        <div style="font-size:36px;font-weight:800;color:#dc2626">${summary.failed}</div>
+        <div style="font-size:36px;font-weight:800;color:#dc2626">${mergedSummary.failed}</div>
         <div style="font-size:13px;color:#6b7280;margin-top:4px">Failed</div>
       </div>` : ''}
       <div style="flex:1;min-width:120px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#374151">${summary.suitesTotal}</div>
+        <div style="font-size:28px;font-weight:700;color:#374151">${mergedSummary.suitesTotal}</div>
         <div style="font-size:13px;color:#6b7280;margin-top:4px">Test Suites</div>
       </div>
       <div style="flex:1;min-width:120px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#374151">${summary.time}</div>
+        <div style="font-size:28px;font-weight:700;color:#374151">${mergedSummary.time}</div>
         <div style="font-size:13px;color:#6b7280;margin-top:4px">Duration</div>
       </div>
     </div>`;
 
-  // ── 커버리지 요약 (접이식 느낌으로 작게) ──
-  const coverageSummary = total ? `
-    <div style="margin-bottom:24px">
-      <div style="font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Coverage</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        ${[['Stmts', total.stmts], ['Branch', total.branch], ['Funcs', total.funcs], ['Lines', total.lines]].map(([label, val]) => `
-          <div style="flex:1;min-width:80px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center">
-            <div style="font-size:18px;font-weight:700;color:${pctColor(val)}">${val.toFixed(1)}%</div>
-            <div style="font-size:11px;color:#9ca3af;margin-top:2px">${label}</div>
-          </div>`).join('')}
-      </div>
-    </div>` : '';
-
-  // ── 파일별 상세 (서비스 파일만, 100% 제외) ──
-  const notableFiles = files.filter(r => {
-    const isService = r.file.endsWith('.service.ts') || r.file.endsWith('.guard.ts') || r.file.endsWith('.interceptor.ts');
-    const hasLowCoverage = r.stmts < 80 || r.branch < 80 || r.funcs < 80;
-    return isService && hasLowCoverage;
-  });
-
-  const fileSection = notableFiles.length > 0 ? `
-    <div>
-      <div style="font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Coverage 주의 파일</div>
-      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:12px">
-        <thead>
-          <tr style="background:#f3f4f6">
-            <th style="padding:8px 12px;text-align:left;color:#6b7280;border-bottom:1px solid #e5e7eb">File</th>
-            <th style="padding:8px 12px;text-align:center;color:#6b7280;border-bottom:1px solid #e5e7eb">Stmts</th>
-            <th style="padding:8px 12px;text-align:center;color:#6b7280;border-bottom:1px solid #e5e7eb">Branch</th>
-            <th style="padding:8px 12px;text-align:center;color:#6b7280;border-bottom:1px solid #e5e7eb">Funcs</th>
-            <th style="padding:8px 12px;text-align:center;color:#6b7280;border-bottom:1px solid #e5e7eb">Lines</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${notableFiles.map((r, i) => `
-          <tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'}">
-            <td style="padding:8px 12px;color:#374151;border-bottom:1px solid #e5e7eb;font-family:monospace">${r.file}</td>
-            <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb">${pctBadge(r.stmts)}</td>
-            <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb">${pctBadge(r.branch)}</td>
-            <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb">${pctBadge(r.funcs)}</td>
-            <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb">${pctBadge(r.lines)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>` : '';
+  // ── 섹션별 상세 ──
+  const sectionDivider = '<div style="border-top:1px solid #e5e7eb;margin:24px 0"></div>';
+  const sectionsHtml = sections.map(s => buildSectionHtml(s)).join(sectionDivider);
 
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -204,16 +246,16 @@ function buildHtml(rows, summary, projectName, version) {
         <span style="font-size:13px;opacity:0.85">${projectName}</span>
         <span style="opacity:0.4">·</span>
         <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.45);border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;letter-spacing:0.04em">
-          🏷️ ${version}
+          ${version}
         </span>
+        ${isBothSections ? '<span style="opacity:0.4">·</span><span style="font-size:12px;opacity:0.85">Backend + Frontend</span>' : ''}
         <span style="opacity:0.4">·</span>
         <span style="font-size:12px;opacity:0.75">${now}</span>
       </div>
     </div>
     <div style="padding:32px">
       ${heroCards}
-      ${coverageSummary}
-      ${fileSection}
+      ${sectionsHtml}
     </div>
   </div>
 </body></html>`;
@@ -235,7 +277,7 @@ async function sendMail(to, html, projectName, summary, version) {
   await transporter.sendMail({
     from: `"${projectName} CI" <${MAIL_USER}>`,
     to,
-    subject: `[${projectName}] 🏷️ ${version} · ${status} · ${testCount} tests · ${now}`,
+    subject: `[${projectName}] ${version} · ${status} · ${testCount} tests · ${now}`,
     html,
   });
 
