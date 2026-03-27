@@ -3,7 +3,8 @@ name: test-deploy
 description: >
   테스트 커버리지를 실행하고 결과를 HTML 이메일로 발송하는 스킬.
   /test-deploy 명령어 또는 "테스트 결과 메일로 보내줘", "coverage 이메일 발송",
-  "test:cov 결과 공유", "pnpm test:deploy" 등의 요청 시 반드시 이 스킬을 사용한다.
+  "test:cov 결과 공유" 등의 요청 시 반드시 이 스킬을 사용한다.
+  pnpm, npm, yarn 등 프로젝트의 패키지 매니저를 자동 감지하여 동작한다.
   수신자 이메일을 인자로 받아 Gmail SMTP로 발송하며, 어떤 프로젝트에서도 동작한다.
 ---
 
@@ -71,9 +72,18 @@ git checkout "$VERSION"
 # OS별 임시 파일 경로 생성 (프로젝트명 포함, Windows/Mac/Linux/WSL 모두 지원)
 TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-output-'+(p.name||'project')+'.txt'))")
 
+# 패키지 매니저 자동 감지: pnpm-lock.yaml → pnpm, yarn.lock → yarn, 그 외 → npm
+if [ -f "pnpm-lock.yaml" ]; then
+  PM="pnpm"
+elif [ -f "yarn.lock" ]; then
+  PM="yarn"
+else
+  PM="npm"
+fi
+
 # coverage 결과를 임시 파일로 저장
 # package.json에 test:cov 스크립트가 있으면 사용, 없으면 jest --coverage로 fallback
-pnpm test:cov 2>&1 | tee "$TMPFILE" || pnpm jest --coverage 2>&1 | tee "$TMPFILE"
+$PM run test:cov 2>&1 | tee "$TMPFILE" || npx jest --coverage 2>&1 | tee "$TMPFILE"
 ```
 
 실패한 테스트가 있어도 계속 진행한다 (coverage 결과는 생성됨).
