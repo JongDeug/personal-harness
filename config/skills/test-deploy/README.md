@@ -66,124 +66,23 @@ MAIL_PASS=앱비밀번호16자리
 
 ## 쉘 실행
 
-테스트할 **프로젝트 루트 디렉토리**에서 아래 명령어를 실행합니다.
-
-`RECIPIENT`와 `SKILL_DIR`만 본인 환경에 맞게 변경하세요.
-
-### 백엔드만 (`--back`)
+테스트할 **프로젝트 루트 디렉토리**에서 스크립트를 실행합니다.
 
 ```bash
-# ── 변수 설정 ─────────────────────────────────────────────────
-RECIPIENT="수신자@email.com"
-SKILL_DIR="/path/to/personal-harness/config/skills/test-deploy"
+# 백엔드만 (기본)
+~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com
 
-# ── 1. 버전 감지 (직접 지정하려면: VERSION="v1.2.0") ─────────
-VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ -z "$VERSION" ]; then
-  echo "git 태그가 없습니다. VERSION을 직접 지정해주세요."
-  return 1 2>/dev/null || exit 1
-fi
+# 프론트만
+~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com --front
 
-# ── 2. 태그 체크아웃 ──────────────────────────────────────────
-ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-git checkout "$VERSION"
+# 둘 다
+~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com --back --front
 
-# ── 3. 패키지 매니저 감지 & 테스트 실행 ──────────────────────
-if [ -f "pnpm-lock.yaml" ]; then PM="pnpm"; elif [ -f "yarn.lock" ]; then PM="yarn"; else PM="npm"; fi
-BACK_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-back-'+(p.name||'project')+'.txt'))")
-$PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE"
-
-# ── 4. 원래 브랜치 복귀 ──────────────────────────────────────
-git checkout "$ORIGINAL_BRANCH"
-
-# ── 5. 이메일 발송 ───────────────────────────────────────────
-PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'project')" 2>/dev/null || basename "$(pwd)")
-node "$SKILL_DIR/scripts/send-coverage-mail.mjs" \
-  --to "$RECIPIENT" --project "$PROJECT_NAME" --dir "$(pwd)" --version "$VERSION" \
-  --back "$BACK_TMPFILE"
+# 버전 직접 지정
+~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com v1.2.0 --back --front
 ```
 
-### 프론트엔드만 (`--front`)
-
-```bash
-RECIPIENT="수신자@email.com"
-SKILL_DIR="/path/to/personal-harness/config/skills/test-deploy"
-
-VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ -z "$VERSION" ]; then echo "git 태그가 없습니다."; return 1 2>/dev/null || exit 1; fi
-
-ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-git checkout "$VERSION"
-
-# ── 프론트엔드 디렉토리 감지 ─────────────────────────────────
-FRONT_DIR=""
-for dir in *-front frontend client web app; do
-  if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then FRONT_DIR="$dir"; break; fi
-done
-if [ -z "$FRONT_DIR" ]; then echo "프론트엔드 디렉토리를 찾을 수 없습니다."; git checkout "$ORIGINAL_BRANCH"; return 1 2>/dev/null || exit 1; fi
-
-cd "$FRONT_DIR"
-if [ -f "pnpm-lock.yaml" ]; then PM="pnpm"; elif [ -f "yarn.lock" ]; then PM="yarn"; else PM="npm"; fi
-[ ! -d "node_modules" ] && $PM install
-FRONT_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-front-'+(p.name||'project')+'.txt'))")
-
-if grep -q '"test:coverage"' package.json; then $PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE"
-elif grep -q '"test:cov"' package.json; then $PM run test:cov 2>&1 | tee "$FRONT_TMPFILE"
-else npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE"; fi
-cd ..
-
-git checkout "$ORIGINAL_BRANCH"
-
-PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'project')" 2>/dev/null || basename "$(pwd)")
-node "$SKILL_DIR/scripts/send-coverage-mail.mjs" \
-  --to "$RECIPIENT" --project "$PROJECT_NAME" --dir "$(pwd)" --version "$VERSION" \
-  --front "$FRONT_TMPFILE"
-```
-
-### 둘 다 (`--back --front`)
-
-```bash
-RECIPIENT="수신자@email.com"
-SKILL_DIR="/path/to/personal-harness/config/skills/test-deploy"
-
-VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ -z "$VERSION" ]; then echo "git 태그가 없습니다."; return 1 2>/dev/null || exit 1; fi
-
-ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-git checkout "$VERSION"
-
-# ── 백엔드 ────────────────────────────────────────────────────
-if [ -f "pnpm-lock.yaml" ]; then BACK_PM="pnpm"; elif [ -f "yarn.lock" ]; then BACK_PM="yarn"; else BACK_PM="npm"; fi
-BACK_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-back-'+(p.name||'project')+'.txt'))")
-$BACK_PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE"
-
-# ── 프론트엔드 ────────────────────────────────────────────────
-FRONT_DIR=""
-for dir in *-front frontend client web app; do
-  if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then FRONT_DIR="$dir"; break; fi
-done
-if [ -z "$FRONT_DIR" ]; then echo "프론트엔드 디렉토리를 찾을 수 없습니다."; git checkout "$ORIGINAL_BRANCH"; return 1 2>/dev/null || exit 1; fi
-
-cd "$FRONT_DIR"
-if [ -f "pnpm-lock.yaml" ]; then FRONT_PM="pnpm"; elif [ -f "yarn.lock" ]; then FRONT_PM="yarn"; else FRONT_PM="npm"; fi
-[ ! -d "node_modules" ] && $FRONT_PM install
-FRONT_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-front-'+(p.name||'project')+'.txt'))")
-
-if grep -q '"test:coverage"' package.json; then $FRONT_PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE"
-elif grep -q '"test:cov"' package.json; then $FRONT_PM run test:cov 2>&1 | tee "$FRONT_TMPFILE"
-else npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE"; fi
-cd ..
-
-# ── 복귀 & 발송 ──────────────────────────────────────────────
-git checkout "$ORIGINAL_BRANCH"
-
-PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'project')" 2>/dev/null || basename "$(pwd)")
-node "$SKILL_DIR/scripts/send-coverage-mail.mjs" \
-  --to "$RECIPIENT" --project "$PROJECT_NAME" --dir "$(pwd)" --version "$VERSION" \
-  --back "$BACK_TMPFILE" --front "$FRONT_TMPFILE"
-```
-
-> 태그 체크아웃 없이 **현재 브랜치에서 바로 실행**하려면 버전 감지, 태그 체크아웃, 브랜치 복귀 단계를 생략하면 됩니다.
+> 인자 순서는 자유입니다. 플래그 생략 시 `--back`이 기본값입니다.
 
 ---
 
