@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # ── Usage ─────────────────────────────────────────────────────────────────
 # ./test-deploy.sh <recipient> [version] [--back] [--front]
@@ -12,6 +11,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(pwd)"
 
 # ── 인자 파싱 ─────────────────────────────────────────────────────────────
 RECIPIENT=""
@@ -65,18 +65,26 @@ detect_pm() {
   else echo "npm"; fi
 }
 
+# ── package.json version 읽기 함수 ───────────────────────────────────────
+read_pkg_version() {
+  node -e "console.log(require('./package.json').version || 'unknown')" 2>/dev/null || echo "unknown"
+}
+
 # ── 백엔드 테스트 ─────────────────────────────────────────────────────────
 BACK_TMPFILE=""
+BACK_VERSION=""
 if [ "$RUN_BACK" = true ]; then
   echo ""
   echo "🔧 Backend 테스트 실행 중..."
+  BACK_VERSION=$(read_pkg_version)
   PM=$(detect_pm)
   BACK_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-back-'+(p.name||'project')+'.txt'))")
-  $PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE"
+  $PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE" || true
 fi
 
 # ── 프론트엔드 테스트 ─────────────────────────────────────────────────────
 FRONT_TMPFILE=""
+FRONT_VERSION=""
 if [ "$RUN_FRONT" = true ]; then
   echo ""
   echo "🎨 Frontend 디렉토리 감지 중..."
@@ -105,19 +113,22 @@ if [ "$RUN_FRONT" = true ]; then
 
   echo "   → $FRONT_DIR 감지됨"
   echo "🎨 Frontend 테스트 실행 중..."
-  cd "$FRONT_DIR"
+  cd "$PROJECT_ROOT/$FRONT_DIR"
+  FRONT_VERSION=$(read_pkg_version)
   PM=$(detect_pm)
-  [ ! -d "node_modules" ] && $PM install
+  if [ ! -d "node_modules" ]; then
+    $PM install
+  fi
   FRONT_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-front-'+(p.name||'project')+'.txt'))")
 
   if grep -q '"test:coverage"' package.json 2>/dev/null; then
-    $PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE"
+    $PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE" || true
   elif grep -q '"test:cov"' package.json 2>/dev/null; then
-    $PM run test:cov 2>&1 | tee "$FRONT_TMPFILE"
+    $PM run test:cov 2>&1 | tee "$FRONT_TMPFILE" || true
   else
-    npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE"
+    npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE" || true
   fi
-  cd ..
+  cd "$PROJECT_ROOT"
 fi
 
 # ── 원래 브랜치 복귀 ─────────────────────────────────────────────────────
@@ -126,11 +137,11 @@ echo "🔄 원래 브랜치($ORIGINAL_BRANCH)로 복귀..."
 git checkout "$ORIGINAL_BRANCH"
 
 # ── 이메일 발송 ──────────────────────────────────────────────────────────
-PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'project')" 2>/dev/null || basename "$(pwd)")
+PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'project')" 2>/dev/null || basename "$PROJECT_ROOT")
 
-MAIL_ARGS="--to $RECIPIENT --project $PROJECT_NAME --dir $(pwd) --version $VERSION"
-[ -n "$BACK_TMPFILE" ] && MAIL_ARGS="$MAIL_ARGS --back $BACK_TMPFILE"
-[ -n "$FRONT_TMPFILE" ] && MAIL_ARGS="$MAIL_ARGS --front $FRONT_TMPFILE"
+MAIL_CMD="node \"$SKILL_DIR/scripts/send-coverage-mail.mjs\" --to \"$RECIPIENT\" --project \"$PROJECT_NAME\" --version \"$VERSION\""
+[ -n "$BACK_TMPFILE" ] && MAIL_CMD="$MAIL_CMD --back \"$BACK_TMPFILE\" --back-version \"$BACK_VERSION\""
+[ -n "$FRONT_TMPFILE" ] && MAIL_CMD="$MAIL_CMD --front \"$FRONT_TMPFILE\" --front-version \"$FRONT_VERSION\""
 
 echo "📧 이메일 발송 중..."
-node "$SKILL_DIR/scripts/send-coverage-mail.mjs" $MAIL_ARGS
+eval $MAIL_CMD

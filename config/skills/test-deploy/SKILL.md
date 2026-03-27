@@ -51,19 +51,16 @@ grep -E "MAIL_USER|MAIL_PASS" /home/jongdeug/.claude/skills/test-deploy/.env 2>/
 ### 2. 태그 체크아웃
 
 ```bash
-# 버전: 인자로 받은 값 또는 최신 git 태그
 VERSION={version}  # 인자가 없으면 아래 fallback
 if [ -z "$VERSION" ]; then
   VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
 fi
 
-# 태그가 없으면 중단
 if [ -z "$VERSION" ]; then
   echo "❌ git 태그가 존재하지 않습니다. 버전을 직접 지정해주세요: /test-deploy email version"
   # 중단
 fi
 
-# 현재 브랜치 저장 후 태그로 체크아웃
 ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git checkout "$VERSION"
 ```
@@ -74,81 +71,51 @@ git checkout "$VERSION"
 
 프론트엔드 하위 디렉토리를 자동 감지한다. 아래 순서로 탐색:
 
-```bash
-# 프론트엔드 디렉토리 감지 (우선순위 순)
-FRONT_DIR=""
-for dir in *-front frontend client web app; do
-  if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
-    FRONT_DIR="$dir"
-    break
-  fi
-done
-
-# 못 찾으면 package.json이 있는 하위 디렉토리 중 react/vue/vite 의존성이 있는 것을 탐색
-if [ -z "$FRONT_DIR" ]; then
-  for dir in */; do
-    if [ -f "${dir}package.json" ] && grep -qE '"react"|"vue"|"vite"|"next"|"nuxt"' "${dir}package.json" 2>/dev/null; then
-      FRONT_DIR="${dir%/}"
-      break
-    fi
-  done
-fi
-```
+1. `*-front`, `frontend`, `client`, `web`, `app` 이름의 하위 디렉토리 중 `package.json`이 있는 것
+2. 위에서 못 찾으면 하위 디렉토리의 `package.json`에서 `react`, `vue`, `vite`, `next`, `nuxt` 의존성이 있는 디렉토리
 
 감지 실패 시 사용자에게 프론트엔드 디렉토리 경로를 물어본다.
 
 ### 4. 패키지 매니저 감지 (디렉토리별)
 
-```bash
-# 주어진 디렉토리의 패키지 매니저를 감지하는 함수
-detect_pm() {
-  local dir="$1"
-  if [ -f "$dir/pnpm-lock.yaml" ]; then
-    echo "pnpm"
-  elif [ -f "$dir/yarn.lock" ]; then
-    echo "yarn"
-  else
-    echo "npm"
-  fi
-}
-```
+`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, 그 외 → npm
 
 ### 5. 테스트 실행 및 coverage 캡처
 
 **`--back` 실행 시** (프로젝트 루트):
 
 ```bash
-BACK_PM=$(detect_pm ".")
+# 백엔드 package.json에서 버전 읽기
+BACK_VERSION=$(node -e "console.log(require('./package.json').version || 'unknown')")
+
 BACK_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-back-'+(p.name||'project')+'.txt'))")
-$BACK_PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE"
+$PM run test:cov 2>&1 | tee "$BACK_TMPFILE" || npx jest --coverage 2>&1 | tee "$BACK_TMPFILE"
 ```
 
 **`--front` 실행 시** (프론트엔드 디렉토리):
 
 ```bash
 cd "$FRONT_DIR"
-FRONT_PM=$(detect_pm ".")
+
+# 프론트엔드 package.json에서 버전 읽기
+FRONT_VERSION=$(node -e "console.log(require('./package.json').version || 'unknown')")
 
 # 의존성 설치 (node_modules 없을 경우)
 if [ ! -d "node_modules" ]; then
-  $FRONT_PM install
+  $PM install
 fi
 
 FRONT_TMPFILE=$(node -e "const os=require('os'),path=require('path'),p=require('./package.json');console.log(path.join(os.tmpdir(),'coverage-front-'+(p.name||'project')+'.txt'))")
 
-# package.json에서 test:coverage 또는 test:cov 스크립트 탐색
-if grep -q '"test:coverage"' package.json 2>/dev/null; then
-  $FRONT_PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE"
-elif grep -q '"test:cov"' package.json 2>/dev/null; then
-  $FRONT_PM run test:cov 2>&1 | tee "$FRONT_TMPFILE"
-else
-  npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE"
-fi
+# test:coverage → test:cov → npx vitest → npx jest 순으로 fallback
+if grep -q '"test:coverage"' package.json; then $PM run test:coverage 2>&1 | tee "$FRONT_TMPFILE"
+elif grep -q '"test:cov"' package.json; then $PM run test:cov 2>&1 | tee "$FRONT_TMPFILE"
+else npx vitest run --coverage 2>&1 | tee "$FRONT_TMPFILE" || npx jest --coverage 2>&1 | tee "$FRONT_TMPFILE"; fi
 
 cd ..  # 프로젝트 루트로 복귀
 ```
 
-실패한 테스트가 있어도 계속 진행한다 (coverage 결과는 생성됨).
+테스트가 실패해도 계속 진행한다 (coverage 결과는 생성됨).
 
 ### 6. 원래 브랜치 복귀
 
@@ -167,28 +134,19 @@ PROJECT_NAME=$(node -e "const p=require('./package.json');console.log(p.name||'p
 
 # --back만
 node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
-  --to {recipient} \
-  --project "$PROJECT_NAME" \
-  --dir "$(pwd)" \
-  --version "$VERSION" \
-  --back "$BACK_TMPFILE"
+  --to {recipient} --project "$PROJECT_NAME" --version "$VERSION" \
+  --back "$BACK_TMPFILE" --back-version "$BACK_VERSION"
 
 # --front만
 node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
-  --to {recipient} \
-  --project "$PROJECT_NAME" \
-  --dir "$(pwd)" \
-  --version "$VERSION" \
-  --front "$FRONT_TMPFILE"
+  --to {recipient} --project "$PROJECT_NAME" --version "$VERSION" \
+  --front "$FRONT_TMPFILE" --front-version "$FRONT_VERSION"
 
 # --back --front (둘 다)
 node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
-  --to {recipient} \
-  --project "$PROJECT_NAME" \
-  --dir "$(pwd)" \
-  --version "$VERSION" \
-  --back "$BACK_TMPFILE" \
-  --front "$FRONT_TMPFILE"
+  --to {recipient} --project "$PROJECT_NAME" --version "$VERSION" \
+  --back "$BACK_TMPFILE" --back-version "$BACK_VERSION" \
+  --front "$FRONT_TMPFILE" --front-version "$FRONT_VERSION"
 ```
 
 `{SKILL_DIR}`은 이 파일의 실제 절대 경로로 대체한다:
@@ -216,8 +174,8 @@ node {SKILL_DIR}/scripts/send-coverage-mail.mjs \
 ## 메일 내용
 
 - **제목**: `[{project-name}] {version} · ✅ Passed · 10/10 tests · {날짜}`
+- **헤더**: 프로젝트명 + git 태그(전체 버전)
 - **본문**:
   - 합산 Summary 카드 (Tests Passed, Test Suites, Duration)
-  - `--back --front` 시: Backend / Frontend 섹션을 구분선으로 나누어 각각의 Coverage(Stmts/Branch/Funcs/Lines) + 주의 파일 테이블 표시
-  - 단일 플래그 시: 해당 섹션만 표시
+  - 각 섹션(Backend/Frontend): 개별 package.json 버전 + 테스트 결과 + Coverage(Stmts/Branch/Funcs/Lines)
 - **색상**: 녹색(>=80%), 노란색(60-79%), 빨간색(<60%)

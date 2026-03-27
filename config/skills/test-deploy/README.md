@@ -92,8 +92,8 @@ MAIL_PASS=앱비밀번호16자리
 |------|------|
 | 제목 | `[project-name] v1.0.0 · ✅ Passed · 10/10 tests · 2026. 3. 24.` |
 | 발신자 | `project-name CI <MAIL_USER>` |
-| 본문 (단일) | Summary 카드 + Coverage + 주의 파일 테이블 |
-| 본문 (--back --front) | 합산 Summary 카드 + Backend 섹션 + Frontend 섹션 (구분선) |
+| 본문 (단일) | 합산 Summary 카드 + Coverage 요약 (Stmts/Branch/Funcs/Lines) |
+| 본문 (--back --front) | 합산 Summary 카드 + Backend 섹션(개별 버전+Coverage) + Frontend 섹션(개별 버전+Coverage) |
 
 색상 기준: 🟢 >= 80% / 🟡 60-79% / 🔴 < 60%
 

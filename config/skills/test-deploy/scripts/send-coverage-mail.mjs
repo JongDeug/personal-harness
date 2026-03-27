@@ -3,7 +3,8 @@
  * Coverage 결과를 HTML 이메일로 발송하는 스크립트
  *
  * Usage:
- *   node send-coverage-mail.mjs --to <email> --project <name> --dir <path> --version <ver> [--back <file>] [--front <file>]
+ *   node send-coverage-mail.mjs --to <email> --project <name> --version <ver> \
+ *     [--back <file> --back-version <ver>] [--front <file> --front-version <ver>]
  *
  * 최소 --back 또는 --front 중 하나는 필수.
  */
@@ -32,13 +33,14 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv);
 const recipient = args.to;
 const projectName = args.project || 'project';
-const projectDir = args.dir || process.cwd();
 const version = args.version || 'untagged';
 const backFile = args.back;
 const frontFile = args.front;
+const backVersion = args['back-version'] || version;
+const frontVersion = args['front-version'] || version;
 
 if (!recipient) {
-  console.error('Usage: node send-coverage-mail.mjs --to <email> --project <name> --dir <path> --version <ver> [--back <file>] [--front <file>]');
+  console.error('Usage: node send-coverage-mail.mjs --to <email> --project <name> --version <ver> [--back <file> --back-version <ver>] [--front <file> --front-version <ver>]');
   process.exit(1);
 }
 
@@ -65,12 +67,12 @@ const sections = [];
 
 if (backFile) {
   const text = readFileSync(backFile, 'utf8');
-  sections.push({ label: 'Backend', coverage: parseCoverage(text), summary: parseTestSummary(text) });
+  sections.push({ label: 'Backend', version: backVersion, coverage: parseCoverage(text), summary: parseTestSummary(text) });
 }
 
 if (frontFile) {
   const text = readFileSync(frontFile, 'utf8');
-  sections.push({ label: 'Frontend', coverage: parseCoverage(text), summary: parseTestSummary(text) });
+  sections.push({ label: 'Frontend', version: frontVersion, coverage: parseCoverage(text), summary: parseTestSummary(text) });
 }
 
 const mergedSummary = mergeSummaries(sections.map(s => s.summary));
@@ -170,13 +172,8 @@ function pctColor(val) {
   return '#dc2626';
 }
 
-function pctBadge(val) {
-  if (isNaN(val)) return `<span style="color:#6b7280">-</span>`;
-  return `<span style="color:${pctColor(val)};font-weight:600">${val.toFixed(1)}%</span>`;
-}
-
 function buildSectionHtml(section) {
-  const { label, coverage, summary } = section;
+  const { label, version: sectionVersion, coverage, summary } = section;
 
   const statusIcon = summary.allPassed ? '✅' : '❌';
   const statusText = summary.allPassed ? 'Passed' : 'Failed';
@@ -185,6 +182,7 @@ function buildSectionHtml(section) {
   const sectionHeader = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <div style="font-size:16px;font-weight:700;color:#111827">${label}</div>
+      <span style="font-size:11px;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:2px 8px;font-family:monospace">v${sectionVersion}</span>
       <span style="font-size:12px;color:${statusColor};font-weight:600">${statusIcon} ${summary.tests}/${summary.testsTotal} tests ${statusText}</span>
       <span style="font-size:12px;color:#9ca3af">${summary.time}</span>
     </div>`;
