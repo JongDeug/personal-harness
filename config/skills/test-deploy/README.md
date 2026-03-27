@@ -1,42 +1,12 @@
 # test-deploy
 
 테스트 커버리지를 실행하고 결과를 HTML 이메일로 발송하는 도구입니다.
-Claude Code 스킬(`/test-deploy`)로도, 쉘에서 직접으로도 실행할 수 있습니다.
-
----
-
-## 사전 설정 (최초 1회)
-
-### 1. 의존성 설치
-
-```bash
-cd ~/.claude/skills/test-deploy
-npm install
-```
-
-### 2. Gmail 앱 비밀번호 발급
-
-1. [myaccount.google.com](https://myaccount.google.com) → **보안** → **2단계 인증** → **앱 비밀번호**
-2. 앱 이름 입력 (예: `claude-test-deploy`) → **만들기**
-3. 생성된 16자리 비밀번호 복사
-
-> 2단계 인증이 켜져 있어야 앱 비밀번호 메뉴가 표시됩니다.
-
-### 3. `.env` 설정
-
-**스킬 디렉토리**에 `.env` 파일을 생성합니다 (프로젝트 루트가 아님):
-
-```bash
-# ~/.claude/skills/test-deploy/.env
-MAIL_USER=본인Gmail@gmail.com
-MAIL_PASS=앱비밀번호16자리
-```
 
 ---
 
 ## 실행 방법
 
-### A. Claude Code 스킬로 실행
+### A. Claude Code 스킬
 
 ```
 /test-deploy 수신자@email.com v1.0.0
@@ -46,18 +16,63 @@ MAIL_PASS=앱비밀번호16자리
 
 ### B. 쉘에서 직접 실행
 
-프로젝트 루트 디렉토리에서 아래 명령어를 실행합니다.
+아래 순서를 따라주세요.
+
+---
+
+## 설치 (최초 1회)
+
+### 1. 레포 클론
 
 ```bash
-# ── 변수 설정 (수신자 이메일만 변경) ──────────────────────────
+git clone https://github.com/JongDeug/personal-harness.git
+```
+
+> 이미 클론되어 있다면 생략합니다.
+
+### 2. 의존성 설치
+
+```bash
+cd personal-harness/config/skills/test-deploy
+npm install
+```
+
+### 3. Gmail 앱 비밀번호 발급
+
+1. [myaccount.google.com](https://myaccount.google.com) → **보안** → **2단계 인증** → **앱 비밀번호**
+2. 앱 이름 입력 (예: `test-deploy`) → **만들기**
+3. 생성된 16자리 비밀번호 복사
+
+> 2단계 인증이 켜져 있어야 앱 비밀번호 메뉴가 표시됩니다.
+
+### 4. `.env` 설정
+
+**test-deploy 디렉토리** 안에 `.env` 파일을 생성합니다:
+
+```bash
+# personal-harness/config/skills/test-deploy/.env
+MAIL_USER=본인Gmail@gmail.com
+MAIL_PASS=앱비밀번호16자리
+```
+
+---
+
+## 쉘 실행
+
+테스트할 **프로젝트 루트 디렉토리**에서 아래 명령어를 실행합니다.
+
+`RECIPIENT`와 `SKILL_DIR`만 본인 환경에 맞게 변경하세요.
+
+```bash
+# ── 변수 설정 ─────────────────────────────────────────────────
 RECIPIENT="수신자@email.com"
-SKILL_DIR="$HOME/.claude/skills/test-deploy"
+SKILL_DIR="/path/to/personal-harness/config/skills/test-deploy"
 
 # ── 1. 버전 감지 (직접 지정하려면: VERSION="v1.2.0") ─────────
 VERSION=$(git describe --tags --abbrev=0 2>/dev/null)
 if [ -z "$VERSION" ]; then
-  echo "❌ git 태그가 없습니다. VERSION을 직접 지정해주세요."
-  exit 1
+  echo "git 태그가 없습니다. VERSION을 직접 지정해주세요."
+  return 1 2>/dev/null || exit 1
 fi
 
 # ── 2. 태그 체크아웃 ──────────────────────────────────────────
@@ -98,7 +113,7 @@ node "$SKILL_DIR/scripts/send-coverage-mail.mjs" \
 | 발신자 | `project-name CI <MAIL_USER>` |
 | 본문 | Summary 카드 (Stmts/Branch/Funcs/Lines) + 파일별 상세 테이블 |
 
-색상 기준: 🟢 ≥ 80% / 🟡 60-79% / 🔴 < 60%
+색상 기준: 🟢 >= 80% / 🟡 60-79% / 🔴 < 60%
 
 ---
 
