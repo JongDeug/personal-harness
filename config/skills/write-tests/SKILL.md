@@ -266,7 +266,94 @@ mockGet.calledWith('DB_PORT').mockReturnValue(5432);
 
 ---
 
-### 6. Auto Mocking — 의존성이 많을 때
+### 6. DTO 반환값 필드 검증 규칙 (Response Assertion)
+
+**`toBeInstanceOf()` 만으로 끝내지 않는다.** DTO를 반환하는 메서드는 반드시 주요 필드 값까지 검증한다.
+
+#### 금지 패턴
+
+```typescript
+// ❌ 타입만 확인하고 끝 → API 반환값이 바뀌어도 테스트가 통과함
+expect(result).toBeInstanceOf(GetAssignmentResponseDto);
+```
+
+#### 필수 패턴
+
+```typescript
+// ✅ 타입 + 주요 필드 값 검증
+expect(result).toBeInstanceOf(GetAssignmentResponseDto);
+expect(result.assignId).toBe('ASSIGN-001');
+expect(result.callType).toBe(1);
+expect(result.userId).toBe('USER-001');
+```
+
+#### 검증 범위
+
+아래 필드들은 반드시 assertion에 포함한다:
+
+1. **PK 필드** (예: `assignId`, `customerId`, `recordId`)
+2. **서비스에서 직접 추가/변환하는 파생 필드** (예: `unmaskedPhone`, `userName` 등 join/raw에서 가져오는 필드)
+3. **기본값이 설정되는 필드** (예: `disCd: 0`, `regDate: dayjs()`, `userId || '0'`)
+4. **`getRawAndEntities()` / `getRawMany()` 로 join한 필드** — mock raw 데이터에 포함하고, 결과에서 검증
+
+#### 메서드 호출 인자 검증
+
+`toHaveBeenCalled()` 만 쓰지 않는다. 중요한 사이드이펙트 호출은 인자까지 검증한다.
+
+```typescript
+// ❌ 호출 여부만 확인
+expect(mockGateway.broadcastAssignmentEvent).toHaveBeenCalled();
+
+// ✅ 인자까지 검증
+expect(mockGateway.broadcastAssignmentEvent).toHaveBeenCalledWith(
+  AssignmentEventType.CREATED,
+  'ASSIGN-001',
+  'USER-001',
+  '0',
+  PrCode.RECEPTION,
+  expect.any(String),
+);
+```
+
+#### Mock 데이터 충실도
+
+Mock 객체는 DTO의 `@Expose()` 필드 중 **최소 PK + 비즈니스 핵심 필드**를 포함해야 한다.
+빈약한 mock은 필드 추가/제거 시 테스트가 변경을 감지하지 못한다.
+
+```typescript
+// ❌ 너무 빈약한 mock — DTO 변경 감지 불가
+const mockContract: Partial<Tcontract> = { customerId: 'CUST-001' };
+
+// ✅ 핵심 필드 포함 — DTO 구조 변경 시 테스트 깨짐
+const mockContract: Partial<Tcontract> = {
+  contractId: 'CONTRACT-001',
+  customerId: 'CUST-001',
+  custName: '테스트고객',
+  product: '상품A',
+  startDate: '20240101',
+  endDate: '20241231',
+};
+```
+
+#### `getRawAndEntities()` 사용 시 raw 필드 검증 체크리스트
+
+서비스에서 `addSelect`로 추가한 필드가 N개이면, mock raw 데이터에도 N개 모두 포함하고, 결과 DTO에서 N개 모두 검증한다.
+
+```typescript
+// 서비스: addSelect('customer.bsName'), addSelect('customer.custName'), addSelect('customer.phone'), addSelect('user.userName')
+// → mock raw에 4개 모두 포함
+raw: [{ bsName: '업체명', custName: '고객명', phone: '010-1234-5678', userName: '담당자' }]
+
+// → 결과에서 4개 모두 검증
+expect(result.list[0].bsName).toBe('업체명');
+expect(result.list[0].custName).toBe('고객명');
+expect(result.list[0].phone).toBe('010-1234-5678');
+expect(result.list[0].userName).toBe('담당자');
+```
+
+---
+
+### 7. Auto Mocking — 의존성이 많을 때
 
 `useMocker()` + `jest-mock-extended`를 조합하면 등록되지 않은 모든 의존성을 자동 mock 처리할 수 있다.
 
@@ -292,7 +379,7 @@ beforeEach(async () => {
 
 ---
 
-### 7. E2E Test
+### 8. E2E Test
 
 실제 HTTP 요청 흐름을 검증할 때 사용한다. `supertest`로 HTTP 요청을 시뮬레이션한다.
 
@@ -331,7 +418,7 @@ describe('User (e2e)', () => {
 
 ---
 
-### 8. 실행 명령어
+### 9. 실행 명령어
 
 ```bash
 pnpm test                                    # 전체
