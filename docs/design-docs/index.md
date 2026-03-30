@@ -19,3 +19,4 @@
 | 문서 | 상태 | 설명 |
 |------|------|------|
 | [core-beliefs.md](./core-beliefs.md) | Active | 조직의 핵심 기술 신념 |
+| [healthcheck-convention.md](./healthcheck-convention.md) | Active | HealthCheck API 응답 필드 컨벤션 (DB, Redis, RabbitMQ, NATS) |

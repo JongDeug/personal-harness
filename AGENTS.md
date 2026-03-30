@@ -65,6 +65,7 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 3. **안전 우선** — 되돌리기 어려운 작업(force push, delete 등)은 반드시 확인
 4. **문서 참조** — 작업 전 관련 docs/ 문서가 있는지 확인
 5. **사이드이펙트 검수 필수** — 코드 수정 후 반드시 영향 범위를 분석하고 결과를 보고한다 (아래 상세 절차 참조)
+6. **패턴은 forces에서 도출한다** — 디자인 패턴을 먼저 선택하고 코드에 끼워 맞추지 않는다. 코드에 작용하는 변화의 압력(forces)을 먼저 파악하고, 그 힘에 맞는 구조가 자연스럽게 드러나게 한다. 단순한 코드에 패턴을 억지로 적용하지 않으며, 요구사항 변경으로 기존 패턴이 맞지 않으면 과감히 걷어낸다. 상세 철학은 `docs/design-docs/core-beliefs.md` #6 참조
 
 ### 필수 스킬 사용 규약
 
@@ -140,7 +141,7 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 | `docs/QUALITY_SCORE.md` | 코드 품질 기준 |
 | `docs/PRODUCT_SENSE.md` | 제품 판단 기준 |
 | `docs/PLANS.md` | 실행 계획 작성 가이드 |
-| `docs/design-docs/` | 설계 문서 모음 |
+| `docs/design-docs/` | 설계 문서 모음 (HealthCheck 컨벤션 포함) |
 | `docs/exec-plans/` | 실행 계획 모음 |
 | `docs/product-specs/` | 제품 스펙 모음 |
 | `docs/references/` | 외부 레퍼런스 모음 |
