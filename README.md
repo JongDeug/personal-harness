@@ -17,9 +17,11 @@
 │   ├── QUALITY_SCORE.md         # 코드 품질 기준
 │   ├── RELIABILITY.md           # 안정성/모니터링 가이드
 │   ├── SECURITY.md              # 보안 가이드라인
+│   ├── PROJECT_CLAUDE_TEMPLATE.md # 프로젝트별 CLAUDE.md 템플릿
 │   ├── design-docs/             # 설계 문서
 │   │   ├── index.md
-│   │   └── core-beliefs.md
+│   │   ├── core-beliefs.md
+│   │   └── healthcheck-convention.md
 │   ├── exec-plans/              # 실행 계획
 │   │   ├── active/
 │   │   ├── completed/
@@ -53,7 +55,7 @@
 
 ### 조직 가이드
 
-각 프로젝트 repo에서 이 repo의 문서를 참조한다. 프로젝트별 `CLAUDE.md`에서 이 repo의 `AGENTS.md`를 기본값으로 삼고, 프로젝트 특화 규칙을 추가한다.
+각 프로젝트 repo에서 이 repo의 문서를 참조한다. 프로젝트별 `CLAUDE.md`에서 이 repo의 `AGENTS.md`를 기본값으로 삼고, 프로젝트 특화 규칙을 추가한다. 새 프로젝트 생성 시 `docs/PROJECT_CLAUDE_TEMPLATE.md`를 복사하여 사용한다.
 
 ### 설정 파일
 

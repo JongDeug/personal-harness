@@ -124,6 +124,27 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 4. `/write-tests` → 변경 사항에 대한 테스트 작성 및 통과 확인
 5. `/finish-feat {issue-key}` → push + PR 생성
 
+### Issue → Plan → PR 워크플로우
+
+이슈 발생부터 코드 머지까지의 전체 흐름:
+
+```
+┌─────────┐     ┌─────────────┐     ┌──────────┐     ┌──────────┐     ┌─────────┐
+│  Issue   │────▶│  Exec Plan  │────▶│  Branch  │────▶│    PR    │────▶│  Merge  │
+│ (Jira 등)│     │ (2일+ 작업) │     │ /feat    │     │/finish-  │     │ develop │
+└─────────┘     └─────────────┘     │ /hotfix   │     │ feat     │     │ /main   │
+                       │            └──────────┘     └──────────┘     └─────────┘
+                       │
+                 소규모 작업은
+                 Plan 생략 가능
+```
+
+- **이슈 키가 브랜치명에 들어간다**: `feat/ABC-12`, `fix/ABC-12-1`
+- **2일 이상 작업**: `docs/exec-plans/active/`에 실행 계획 작성 후 시작
+- **소규모 작업** (반나절 이하): Plan 없이 바로 `/feat` → 구현 → `/finish-feat`
+- **PR 본문에 이슈 키 포함**: 자동 연결을 위해 PR 설명에 이슈 키를 명시
+- **완료된 계획**: `docs/exec-plans/completed/`로 이동
+
 ### 프로젝트별 컨텍스트
 
 각 프로젝트 repo에 `CLAUDE.md`가 있으면 그것을 우선으로 따른다. 이 문서는 조직 수준의 기본값이다.
@@ -140,6 +161,7 @@ git-flow 기반. 상세 절차는 `claude/skills/git-flow/SKILL.md` 참조.
 | `docs/RELIABILITY.md` | 안정성/모니터링 가이드 |
 | `docs/QUALITY_SCORE.md` | 코드 품질 기준 |
 | `docs/PRODUCT_SENSE.md` | 제품 판단 기준 |
+| `docs/PROJECT_CLAUDE_TEMPLATE.md` | 프로젝트별 CLAUDE.md 템플릿 |
 | `docs/PLANS.md` | 실행 계획 작성 가이드 |
 | `docs/design-docs/` | 설계 문서 모음 (HealthCheck 컨벤션 포함) |
 | `docs/exec-plans/` | 실행 계획 모음 |

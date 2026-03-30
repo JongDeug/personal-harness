@@ -13,6 +13,23 @@ description: >
   개발자가 브랜치 생성, 배포, 핫픽스 등 Git 배포 플로우 단계를 실행할 때 항상 사용.
 ---
 
+## 빠른 참조 (TL;DR)
+
+| 상황 | 커맨드 | 한 줄 설명 |
+|------|--------|-----------|
+| 기능 시작 | `/feat ABC-12` | develop에서 feat/ABC-12 브랜치 생성 |
+| 기능 완료 | `/finish-feat ABC-12` | push + develop 대상 PR 생성 |
+| 배포 준비 | `/start-rc` | develop에서 RC 브랜치 생성 (버전 자동 감지) |
+| RC 버그수정 | `/rc-fix ABC-12` | RC에서 fix 브랜치 생성 |
+| RC 이슈 제거 | `/revert-issue ABC-12` | RC에서 해당 이슈 커밋 전체 revert |
+| 배포 | `/release 2.1.0.0` | main 머지 + 태깅 + develop sync |
+| 긴급 수정 | `/hotfix 2.1.0.0` | main에서 hotfix 브랜치 생성 |
+| 긴급 수정 완료 | `/finish-hotfix` | main 머지 + 태깅 + RC rebase |
+
+**일반적인 흐름**: `/feat` → 구현 → `/finish-feat` → PR 머지 → `/start-rc` → QA → `/release`
+
+---
+
 ## 브랜치 규칙
 
 - **고정**: `main` (프로덕션), `develop` (개발 통합)
