@@ -56,7 +56,10 @@ fi
 # ── 태그 체크아웃 ─────────────────────────────────────────────────────────
 ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "📌 태그 $VERSION 체크아웃..."
-git checkout "$VERSION"
+if ! git checkout "$VERSION" 2>/dev/null; then
+  echo "❌ 태그 '$VERSION'을 찾을 수 없습니다. git fetch --tags 후 다시 시도해주세요."
+  exit 1
+fi
 
 # ── 패키지 매니저 감지 함수 ───────────────────────────────────────────────
 detect_pm() {
@@ -95,6 +98,20 @@ if [ "$RUN_FRONT" = true ]; then
       break
     fi
   done
+
+  # submodule인 경우 초기화
+  if [ -z "$FRONT_DIR" ]; then
+    for dir in *-front frontend client web app; do
+      if [ -d "$dir" ] && git submodule status "$dir" &>/dev/null; then
+        echo "   → submodule '$dir' 초기화 중..."
+        git submodule update --init "$dir"
+        if [ -f "$dir/package.json" ]; then
+          FRONT_DIR="$dir"
+          break
+        fi
+      fi
+    done
+  fi
 
   if [ -z "$FRONT_DIR" ]; then
     for dir in */; do
