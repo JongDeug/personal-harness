@@ -63,10 +63,10 @@
 
 ### Claude 스킬 (로컬)
 
-`config/skills/`를 `~/.claude/skills`에 심링크하여 사용한다.
+`config/claude/skills/`를 `~/.claude/skills`에 심링크하여 사용한다.
 
 ```bash
-ln -s /path/to/personal-harness/config/skills ~/.claude/skills
+ln -s /path/to/personal-harness/config/claude/skills ~/.claude/skills
 ```
 
 ### Claude 스킬 (마켓플레이스 설치)
@@ -96,7 +96,7 @@ claude plugin install write-tests@personal-harness
 
 ### Windows에서 clone 시 참고
 
-`plugins/` 디렉토리의 파일들은 `config/skills/`로의 심링크이다. Windows에서 심링크가 정상 동작하려면:
+`plugins/` 디렉토리의 파일들은 `config/claude/skills/`로의 심링크이다. Windows에서 심링크가 정상 동작하려면:
 
 1. **개발자 모드 활성화**: 설정 > 개발자용 > 개발자 모드 ON
 2. **Git 심링크 설정**:

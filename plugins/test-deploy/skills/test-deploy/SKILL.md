@@ -1,1 +1,1 @@
-../../../../config/skills/test-deploy/SKILL.md
+../../../../config/claude/skills/test-deploy/SKILL.md

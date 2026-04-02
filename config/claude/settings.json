@@ -1,0 +1,12 @@
+{
+  "hooks": {},
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
+  },
+  "language": "Korean",
+  "voiceEnabled": true,
+  "showThinkingSummaries": true
+}

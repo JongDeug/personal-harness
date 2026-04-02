@@ -1,1 +1,1 @@
-../../../../config/skills/obsidian/SKILL.md
+../../../../config/claude/skills/obsidian/SKILL.md

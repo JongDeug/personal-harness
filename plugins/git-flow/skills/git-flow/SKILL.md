@@ -1,1 +1,1 @@
-../../../../config/skills/git-flow/SKILL.md
+../../../../config/claude/skills/git-flow/SKILL.md

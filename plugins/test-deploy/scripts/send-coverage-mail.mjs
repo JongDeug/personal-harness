@@ -1,1 +1,1 @@
-../../../config/skills/test-deploy/scripts/send-coverage-mail.mjs
+../../../config/claude/skills/test-deploy/scripts/send-coverage-mail.mjs

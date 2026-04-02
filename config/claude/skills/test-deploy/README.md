@@ -40,7 +40,7 @@ git clone https://github.com/JongDeug/personal-harness.git
 ### 2. 의존성 설치
 
 ```bash
-cd personal-harness/config/skills/test-deploy
+cd personal-harness/config/claude/skills/test-deploy
 npm install
 ```
 
@@ -57,7 +57,7 @@ npm install
 **test-deploy 디렉토리** 안에 `.env` 파일을 생성합니다:
 
 ```bash
-# personal-harness/config/skills/test-deploy/.env
+# personal-harness/config/claude/skills/test-deploy/.env
 MAIL_USER=본인Gmail@gmail.com
 MAIL_PASS=앱비밀번호16자리
 ```

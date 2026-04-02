@@ -1,1 +1,1 @@
-../../../../config/skills/write-tests/SKILL.md
+../../../../config/claude/skills/write-tests/SKILL.md
