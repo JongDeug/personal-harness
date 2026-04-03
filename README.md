@@ -41,9 +41,13 @@
 │   ├── vscode/                  # VS Code 설정
 │   └── skills/                  # Claude Code 스킬 (로컬용)
 │       ├── git-flow/
+│       ├── gstack/              # (submodule) 헤드리스 브라우저 QA 스킬
 │       ├── obsidian/
-│       ├── write-tests/
-│       └── test-deploy/
+│       ├── refactor-chain/
+│       ├── sync-readme/         # PostToolUse 훅 — README 구조 자동 동기화
+│       │   └── scripts/
+│       ├── test-deploy/
+│       └── write-tests/
 └── plugins/                     # Claude Code 마켓플레이스 배포용
     ├── git-flow/
     ├── obsidian/
