@@ -3,12 +3,23 @@
     "PostToolUse": [
       {
         "matcher": "Write|Edit|Bash",
-        "command": "bash ~/.claude/skills/sync-readme/scripts/detect-structure-change.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/sync-readme/scripts/detect-structure-change.sh"
+          }
+        ]
       }
     ],
     "Notification": [
       {
-        "command": "bash ~/workspace/personal-harness/config/claude/hooks/notify.sh"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/workspace/personal-harness/config/claude/hooks/notify.sh"
+          }
+        ]
       }
     ]
   },

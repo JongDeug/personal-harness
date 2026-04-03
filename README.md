@@ -1,6 +1,6 @@
 # personal-harness
 
-개인 조직의 개발 표준, 설계 문서, 설정 파일을 관리하는 저장소.
+개인 조직의 개발 표준, 설계 문서, 설정 파일을 관리하는 저장소입니다.
 
 ## 구조
 
@@ -25,6 +25,7 @@
 │   ├── exec-plans/              # 실행 계획
 │   │   ├── active/
 │   │   ├── completed/
+│   │   │   └── example-api-auth-refactor.md
 │   │   └── tech-debt-tracker.md
 │   ├── generated/               # 자동 생성 문서
 │   │   └── db-schema.md
@@ -37,17 +38,20 @@
 │       └── uv-llms.txt
 ├── config/
 │   ├── aerospace/               # AeroSpace 윈도우 매니저 설정
+│   ├── claude/                  # Claude Code 설정
+│   │   ├── hooks/               # Claude Code 훅
+│   │   │   └── notify.sh        # 작업 완료 시 tmux + OS 알림
+│   │   ├── settings.json        # Claude Code 전역 설정 (훅, 플러그인 등)
+│   │   └── skills/              # Claude Code 스킬 (로컬용)
+│   │       ├── git-flow/
+│   │       ├── gstack/          # (submodule) 헤드리스 브라우저 QA 스킬
+│   │       ├── obsidian/
+│   │       ├── refactor-chain/
+│   │       ├── sync-readme/     # PostToolUse 훅 — README 구조 자동 동기화
+│   │       ├── test-deploy/
+│   │       └── write-tests/
 │   ├── tmux/                    # tmux 설정
-│   ├── vscode/                  # VS Code 설정
-│   └── skills/                  # Claude Code 스킬 (로컬용)
-│       ├── git-flow/
-│       ├── gstack/              # (submodule) 헤드리스 브라우저 QA 스킬
-│       ├── obsidian/
-│       ├── refactor-chain/
-│       ├── sync-readme/         # PostToolUse 훅 — README 구조 자동 동기화
-│       │   └── scripts/
-│       ├── test-deploy/
-│       └── write-tests/
+│   └── vscode/                  # VS Code 설정
 └── plugins/                     # Claude Code 마켓플레이스 배포용
     ├── git-flow/
     ├── obsidian/
@@ -65,12 +69,14 @@
 
 `config/` 하위의 설정 파일들을 해당 도구의 설정 경로에 심링크하여 사용한다.
 
-### Claude 스킬 (로컬)
+### Claude 설정 (로컬)
 
-`config/claude/skills/`를 `~/.claude/skills`에 심링크하여 사용한다.
+`config/claude/` 하위의 설정과 스킬을 `~/.claude/`에 심링크하여 사용한다.
 
 ```bash
-ln -s /path/to/personal-harness/config/claude/skills ~/.claude/skills
+ln -sfn /path/to/personal-harness/config/claude/settings.json ~/.claude/settings.json
+ln -sfn /path/to/personal-harness/config/claude/skills ~/.claude/skills
+ln -sfn /path/to/personal-harness/config/claude/hooks ~/.claude/hooks
 ```
 
 ### Claude 스킬 (마켓플레이스 설치)
