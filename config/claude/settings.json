@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/workspace/personal-harness/config/claude/hooks/notify.sh"
+            "command": "bash -c 'if [[ \"$(uname)\" == \"Darwin\" ]]; then B=~/Documents; else B=~/workspace; fi; bash \"$B/personal-harness/config/claude/hooks/notify.sh\"'"
           }
         ]
       }
@@ -31,5 +31,6 @@
   },
   "language": "Korean",
   "voiceEnabled": true,
-  "showThinkingSummaries": true
+  "showThinkingSummaries": true,
+  "model": "sonnet"
 }
