@@ -5,7 +5,7 @@
 set -euo pipefail
 
 INPUT=$(cat)
-MESSAGE=$(echo "$INPUT" | grep -o '"message"\s*:\s*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' | head -1)
+MESSAGE=$(echo "$INPUT" | grep -o '"message"\s*:\s*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' | head -1 || true)
 [ -z "$MESSAGE" ] && MESSAGE="Claude Code 작업 완료"
 
 TITLE="Claude Code"
