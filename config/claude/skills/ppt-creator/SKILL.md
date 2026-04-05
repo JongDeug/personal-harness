@@ -73,7 +73,7 @@ bash ~/.claude/skills/ppt-creator/scripts/create_slidev.sh \
 ### Frontmatter 필수 템플릿
 ```markdown
 ---
-theme: seriph
+theme: default
 colorSchema: dark
 transition: slide-left
 title: 발표 제목
@@ -82,9 +82,13 @@ info: |
 highlighter: shiki
 lineNumbers: false
 routerMode: hash
+fonts:
+  sans: Inter
+  mono: JetBrains Mono
 ---
 ```
-> ⚠️ `routerMode: hash` 빠지면 슬라이드 이동 시 404 오류 발생
+> ⚠️ `routerMode: hash` 빠지면 슬라이드 이동 시 404 오류 발생  
+> ℹ️ `theme: default` + `style.css`(slidev-workspace에 상주)가 sensational 디자인을 적용함. `seriph` 쓰면 구형 디자인으로 돌아감
 
 ### Markdown 포맷
 - `references/slidev-design.md` 참고
