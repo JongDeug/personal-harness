@@ -1,0 +1,119 @@
+{
+  "title": "팀 온보딩",
+  "subtitle": "Welcome to the Team!",
+  "author": "팀명",
+  "theme": "blue",
+  "slides": [
+    {
+      "type": "title",
+      "title": "팀 온보딩",
+      "subtitle": "Welcome to the Team!",
+      "notes": "환영 인사와 함께 이 자료의 목적 설명"
+    },
+    {
+      "type": "section",
+      "title": "우리 팀 소개",
+      "notes": "팀의 역할과 포지셔닝"
+    },
+    {
+      "type": "bullets",
+      "title": "우리가 하는 일",
+      "bullets": [
+        "**팀 미션**: 한 줄 요약",
+        "담당 서비스/도메인",
+        "- 주요 서비스 목록",
+        "팀 규모 및 구성",
+        "- 몇 명, 어떤 역할"
+      ],
+      "notes": "팀이 회사에서 어떤 가치를 만들어내는지 먼저 이해시킬 것"
+    },
+    {
+      "type": "section",
+      "title": "기술 스택",
+      "notes": "신규 팀원이 빠르게 파악해야 할 기술들"
+    },
+    {
+      "type": "two_column",
+      "title": "기술 스택",
+      "left": {
+        "heading": "Backend",
+        "bullets": [
+          "언어: ...",
+          "프레임워크: ...",
+          "DB: ...",
+          "인프라: ..."
+        ]
+      },
+      "right": {
+        "heading": "Frontend / Tools",
+        "bullets": [
+          "언어: ...",
+          "프레임워크: ...",
+          "협업: ...",
+          "모니터링: ..."
+        ]
+      },
+      "notes": "각 기술을 왜 쓰는지 간단히 설명하면 이해가 빠름"
+    },
+    {
+      "type": "section",
+      "title": "개발 프로세스",
+      "notes": "실무에서 매일 쓰는 흐름"
+    },
+    {
+      "type": "bullets",
+      "title": "개발 플로우",
+      "bullets": [
+        "**브랜치 전략**: GitFlow / Trunk-based 등",
+        "PR 규칙",
+        "- 리뷰어 최소 N명",
+        "- 커밋 메시지 규칙",
+        "배포 프로세스",
+        "- 스테이징 → 프로덕션"
+      ],
+      "notes": "첫 주에 PR 한 번 올려보는 게 가장 빠른 이해 방법"
+    },
+    {
+      "type": "bullets",
+      "title": "팀 문화 & 규칙",
+      "bullets": [
+        "**코어 타임**: ...",
+        "스탠드업: 매일 오전 ... 시",
+        "스프린트 주기: ... 주",
+        "회고: ... 주마다",
+        "**중요**: 모르면 물어보세요 🙋"
+      ],
+      "notes": "팀 분위기와 커뮤니케이션 방식을 설명. 심리적 안전감 강조"
+    },
+    {
+      "type": "table",
+      "title": "주요 채널 & 도구",
+      "headers": ["목적", "도구", "링크/채널"],
+      "rows": [
+        ["코드 관리", "GitHub", "@team-repo"],
+        ["커뮤니케이션", "Slack", "#team-channel"],
+        ["이슈 관리", "Jira / Linear", "팀 보드 링크"],
+        ["문서", "Notion / Confluence", "팀 위키"],
+        ["모니터링", "Datadog / Grafana", "대시보드 링크"]
+      ],
+      "notes": "실제 링크로 교체할 것"
+    },
+    {
+      "type": "bullets",
+      "title": "첫 주 체크리스트",
+      "bullets": [
+        "**Day 1**: 환경 세팅, 계정 발급",
+        "**Day 2~3**: 코드베이스 파악, 로컬 실행",
+        "**Day 4~5**: 첫 이슈 pick, PR 제출",
+        "궁금한 건 언제든 DM 주세요!"
+      ],
+      "notes": "구체적인 할 일을 주면 신규 입사자가 방향을 잡기 쉬움"
+    },
+    {
+      "type": "end",
+      "title": "함께해서 반갑습니다!",
+      "subtitle": "질문 / 궁금한 점은 언제든 환영",
+      "notes": "팀 슬랙 채널 다시 한 번 안내"
+    }
+  ]
+}
