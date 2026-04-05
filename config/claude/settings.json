@@ -25,12 +25,18 @@
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
+    "telegram@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "code-review@claude-plugins-official": true
   },
+  "skipDangerousModePermissionPrompt": true,
   "language": "Korean",
   "voiceEnabled": true,
   "showThinkingSummaries": true,
-  "model": "sonnet"
+  "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "cat > /tmp/claude-rate-limits.json"
+  }
 }
