@@ -30,6 +30,9 @@
     "claude-code-setup@claude-plugins-official": true,
     "code-review@claude-plugins-official": true
   },
+  "permissions": {
+    "allow": ["*"]
+  },
   "skipDangerousModePermissionPrompt": true,
   "language": "Korean",
   "voiceEnabled": true,
