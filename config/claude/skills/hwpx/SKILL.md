@@ -8,15 +8,17 @@ description: "HWPX 문서(.hwpx 파일)를 생성, 읽기, 편집, 템플릿 치
 ## 환경 설정
 
 ```bash
-SKILL_DIR=~/.openclaw/workspace/skills/hwpx
-VENV=~/.openclaw/workspace/skills/ppt-creator/.venv
+SKILL_DIR=~/.claude/skills/hwpx
+VENV=~/.claude/skills/ppt-creator/.venv
 PYTHON=$VENV/bin/python3
 
 # 기본 양식 경로
 TEMPLATE=$SKILL_DIR/assets/report-template.hwpx
 
-# 출력 경로 (Obsidian Resource 폴더)
-OUTPUT_DIR=~/.openclaw/workspace/obsidian/Project/
+# 출력 경로 — 사용자(workspace)마다 다름. AGENTS.md에서 확인할 것.
+# jongdeug: ~/.claude/channels/telegram/jongdeug/obsidian/Project/
+# 0deug:    ~/.openclaw/workspace-0deug/obsidian/Project/
+OUTPUT_DIR=<워크스페이스별 Obsidian 경로>/Project/
 ```
 
 ---
@@ -51,7 +53,7 @@ OUTPUT_DIR=~/.openclaw/workspace/obsidian/Project/
      ↓
 [6] ObjectFinder로 치환 결과 검증
      ↓
-[7] ~/.openclaw/workspace/obsidian/Project/ 로 복사
+[7] <OBSIDIAN_DIR>/Project/ 로 복사 (워크스페이스별 경로 확인)
 ```
 
 ### 핵심: HwpxDocument.open()은 사용하지 않는다
@@ -142,7 +144,7 @@ def zip_replace_sequential(src_path, dst_path, old, new_list):
 
 ```python
 import sys
-sys.path.insert(0, '/home/jongdeug/.openclaw/workspace/skills/ppt-creator/.venv/lib/python3.11/site-packages')
+sys.path.insert(0, '/home/jongdeug/.claude/skills/ppt-creator/.venv/lib/python3.12/site-packages')
 from hwpx import ObjectFinder
 
 finder = ObjectFinder("양식파일.hwpx")
@@ -192,10 +194,10 @@ for r in results:
 
 ```python
 import shutil, subprocess, sys
-sys.path.insert(0, '/home/jongdeug/.openclaw/workspace/skills/ppt-creator/.venv/lib/python3.11/site-packages')
+sys.path.insert(0, '/home/jongdeug/.claude/skills/ppt-creator/.venv/lib/python3.12/site-packages')
 
-SKILL_DIR = '/home/jongdeug/.openclaw/workspace/skills/hwpx'
-OUTPUT = '/home/jongdeug/.openclaw/workspace/obsidian/Project/report.hwpx'
+SKILL_DIR = '/home/jongdeug/.claude/skills/hwpx'
+OUTPUT = '<OBSIDIAN_DIR>/Project/report.hwpx'  # 워크스페이스별 경로로 대체
 
 # 1. 양식 복사
 shutil.copy(f'{SKILL_DIR}/assets/report-template.hwpx', '/tmp/work.hwpx')
@@ -233,7 +235,7 @@ print(f'완료: {OUTPUT}')
 
 ```python
 subprocess.run(
-    ['python3', '/home/jongdeug/.openclaw/workspace/skills/hwpx/scripts/fix_namespaces.py', 'output.hwpx'],
+    ['python3', '/home/jongdeug/.claude/skills/hwpx/scripts/fix_namespaces.py', 'output.hwpx'],
     check=True
 )
 ```
@@ -255,5 +257,5 @@ subprocess.run(
 3. **네임스페이스 후처리 필수**: 모든 저장/치환 후 `fix_namespaces.py` 실행
 4. **순차 치환 주의**: 동일 플레이스홀더 여러 개면 `zip_replace_sequential` 사용
 5. **공문서 날짜 형식**: `2026-04-03`이 아닌 `2026. 4. 3.`
-6. **출력 경로**: 항상 `~/.openclaw/workspace/obsidian/Project/` 에 저장
-7. **Python 경로**: 반드시 `sys.path.insert(0, '.venv/lib/.../site-packages')` 추가
+6. **출력 경로**: 워크스페이스 AGENTS.md에서 Obsidian 경로 확인 후 저장 (jongdeug: `~/.claude/channels/telegram/jongdeug/obsidian/Project/`, 0deug: `~/.openclaw/workspace-0deug/obsidian/Project/`)
+7. **Python 경로**: 반드시 `sys.path.insert(0, '~/.claude/skills/ppt-creator/.venv/lib/python3.12/site-packages')` 추가

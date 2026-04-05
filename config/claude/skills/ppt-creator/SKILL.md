@@ -59,7 +59,7 @@ description: "Generate presentation slides for knowledge sharing, tech talks, an
 
 ### 명령
 ```bash
-bash ~/.openclaw/workspace/skills/ppt-creator/scripts/create_slidev.sh \
+bash ~/.claude/skills/ppt-creator/scripts/create_slidev.sh \
   <slides.md> <output-dir/>
 ```
 
@@ -101,12 +101,19 @@ start chrome --disable-web-security --allow-file-access-from-files --user-data-d
 - 이 창에서는 다른 사이트 접속 금지 (보안 꺼진 상태)
 
 ### Obsidian 저장 및 동기화
+
+> ⚠️ Obsidian 경로는 사용자(workspace)마다 다름. 호출 전 워크스페이스의 AGENTS.md에서 확인할 것.
+> - jongdeug: `~/.claude/channels/telegram/jongdeug/obsidian/`
+> - 0deug: `~/.openclaw/workspace-0deug/obsidian/`
+
 ```bash
+OBSIDIAN_DIR=<워크스페이스별 경로>
+
 # rsync로 업데이트 (rm -rf 절대 금지)
-rsync -av --delete <output-dir>/ ~/.openclaw/workspace/obsidian/Project/<name>-slides/
+rsync -av --delete <output-dir>/ $OBSIDIAN_DIR/Project/<name>-slides/
 
 # 동기화 강제 트리거
-find ~/.openclaw/workspace/obsidian/Project/<name>-slides/ -type f | xargs touch
+find $OBSIDIAN_DIR/Project/<name>-slides/ -type f | xargs touch
 ```
 
 ---
@@ -115,7 +122,7 @@ find ~/.openclaw/workspace/obsidian/Project/<name>-slides/ -type f | xargs touch
 
 ### 명령
 ```bash
-node ~/.openclaw/workspace/skills/ppt-creator/scripts/create_reveal.js \
+node ~/.claude/skills/ppt-creator/scripts/create_reveal.js \
   <slides.md> [output.html]
 ```
 
@@ -136,8 +143,8 @@ node ~/.openclaw/workspace/skills/ppt-creator/scripts/create_reveal.js \
 
 ### 명령
 ```bash
-VENV=~/.openclaw/workspace/skills/ppt-creator/.venv
-$VENV/bin/python3 scripts/create_pptx.py <input.json> [output.pptx] [--script]
+VENV=~/.claude/skills/ppt-creator/.venv
+$VENV/bin/python3 ~/.claude/skills/ppt-creator/scripts/create_pptx.py <input.json> [output.pptx] [--script]
 ```
 
 - JSON 구조: `references/slide-design.md` 참고
@@ -151,6 +158,10 @@ $VENV/bin/python3 scripts/create_pptx.py <input.json> [output.pptx] [--script]
 
 ## 기본 출력 경로
 
-- Slidev: `~/.openclaw/workspace/obsidian/Project/<topic>-slides/`
-- Reveal.js: `~/.openclaw/workspace/obsidian/Project/<topic>.html`
-- PPTX: `~/.openclaw/workspace/<topic>.pptx`
+> ⚠️ Obsidian 경로는 사용자(workspace)마다 다름. 워크스페이스의 AGENTS.md에서 확인할 것.
+> - jongdeug: `~/.claude/channels/telegram/jongdeug/obsidian/`
+> - 0deug: `~/.openclaw/workspace-0deug/obsidian/`
+
+- Slidev: `<OBSIDIAN_DIR>/Project/<topic>-slides/`
+- Reveal.js: `<OBSIDIAN_DIR>/Project/<topic>.html`
+- PPTX: `/tmp/<topic>.pptx` (Obsidian에 저장하려면 별도 복사)
