@@ -9,7 +9,7 @@ set -euo pipefail
 INPUT=$(cat)
 
 # 도구 이름 추출 (jq 없이 순수 bash)
-TOOL_NAME=$(echo "$INPUT" | grep -o '"tool_name"\s*:\s*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
+TOOL_NAME=$(echo "$INPUT" | grep -o '"tool_name"\s*:\s*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')  || true
 
 # Write, Edit, Bash 도구만 처리
 case "$TOOL_NAME" in
@@ -18,7 +18,7 @@ case "$TOOL_NAME" in
 esac
 
 # 프로젝트 루트의 README.md 확인
-README="$(git rev-parse --show-toplevel 2>/dev/null)/README.md"
+README="$(git rev-parse --show-toplevel 2>/dev/null || true)/README.md"
 [ -f "$README" ] || exit 0
 
 # README에 구조 섹션이 있는지 확인 (## 구조, ## Structure, ## Project Structure 등)
