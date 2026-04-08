@@ -98,20 +98,27 @@ feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
 4. `git checkout develop && git pull origin develop`
 5. `git checkout -b rc/{version}`
 6. `git push origin rc/{version}`
-7. **package.json 버전 업데이트 및 커밋:**
+7. **초기 태그 버전 계산:**
+   `{version}`에서 `{major}.{minor}.{hotfix}` 파싱 후, 해당 prefix의 최신 태그를 조회:
    ```
-   npm pkg set version={version}
+   git tag --list "{major}.{minor}.{hotfix}.*" --sort=-v:refname | head -1
+   ```
+   - 태그가 없으면: `{tag_version}` = `{major}.{minor}.{hotfix}.0`
+   - 태그가 있으면: 최신 태그의 test 번호 +1 → `{tag_version}` = `{major}.{minor}.{hotfix}.{test+1}`
+   (예: 최신 태그 `1.2.0.0` 존재 → `{tag_version}` = `1.2.0.1`)
+8. **package.json 버전 업데이트 및 커밋:**
+   ```
+   npm pkg set version={tag_version}
    git add package.json
-   git commit -m "[chore]: 버전 {version}으로 업데이트"
+   git commit -m "[chore]: 버전 {tag_version}으로 업데이트"
    git push origin rc/{version}
    ```
-8. **초기 버전 태그 생성:**
+9. **태그 생성:**
    ```
-   git tag {version}
-   git push origin {version}
+   git tag {tag_version}
+   git push origin {tag_version}
    ```
-   (예: `rc/1.10.0.0` → 태그 `1.10.0.0`)
-9. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
+10. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
 
 ---
 
