@@ -80,45 +80,94 @@ feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
 
 ### `/start-rc`
 
-배포 준비 RC 브랜치를 생성하고 리모트에 push한다.
-
-**RC 브랜치 버전은 현재 main의 최신 태그를 자동으로 사용한다.**
-이는 "어떤 main 버전 위에서 QA를 진행하는지" 기록하기 위한 용도이다.
-(예: main 최신 태그 `1.10.0.0` → RC 브랜치 `rc/1.10.0.0`)
+배포 준비 RC 브랜치를 생성하거나, RC 진행 중이면 develop을 기존 RC에 동기화한다.
 
 1. `git fetch origin`
-2. **main 최신 태그 자동 감지:**
+2. **최신 태그 감지:**
    ```
    git tag --list --sort=-v:refname | head -1
    ```
-   감지된 버전을 `{version}`으로 사용. 태그가 없으면 에러 후 중단.
-3. `git diff origin/develop origin/main` 실행
-   - 차이가 있으면 diff 내용 출력 후 "계속 진행할까요?" 확인 요청
+   태그가 없으면 에러 후 중단. 태그를 `{major}.{minor}.{hotfix}.{test}`로 파싱.
+
+3. **분기 판단:**
+   - **Case A**: 최신 태그가 `{major}.{minor}.0.0` 형식 (`hotfix==0` AND `test==0`) → 실제 배포가 나간 상태 → 신규 RC 생성
+   - **Case B**: 그 외 (`hotfix>0` OR `test>0`) → RC 진행 중 → 기존 RC에 develop 동기화
+
+---
+
+**Case A — 신규 RC 생성**
+
+4. `git diff origin/develop origin/main` 실행
+   - 차이가 있으면 diff 출력 후 "계속 진행할까요?" 확인 요청
    - 차이 없으면 그냥 진행
-4. `git checkout develop && git pull origin develop`
-5. `git checkout -b rc/{version}`
-6. `git push origin rc/{version}`
-7. **초기 태그 버전 계산:**
-   `{version}`에서 `{major}.{minor}.{hotfix}` 파싱 후, 해당 prefix의 최신 태그를 조회:
+5. `git checkout develop && git pull origin develop`
+6. `git checkout -b rc/{major}.{minor}.0.0`
+7. `git push origin rc/{major}.{minor}.0.0`
+8. **초기 태그 버전 계산:**
    ```
-   git tag --list "{major}.{minor}.{hotfix}.*" --sort=-v:refname | head -1
+   git tag --list "{major}.{minor}.0.*" --sort=-v:refname | head -1
    ```
-   - 태그가 없으면: `{tag_version}` = `{major}.{minor}.{hotfix}.0`
-   - 태그가 있으면: 최신 태그의 test 번호 +1 → `{tag_version}` = `{major}.{minor}.{hotfix}.{test+1}`
-   (예: 최신 태그 `1.2.0.0` 존재 → `{tag_version}` = `1.2.0.1`)
-8. **package.json 버전 업데이트 및 커밋:**
+   - 태그가 없으면: `{tag_version}` = `{major}.{minor}.0.0`
+   - 태그가 있으면: test +1 → `{tag_version}` = `{major}.{minor}.0.{test+1}`
+   (예: `1.2.0.0` 이미 존재 → `{tag_version}` = `1.2.0.1`)
+9. **package.json 버전 업데이트 및 커밋:**
    ```
    npm pkg set version={tag_version}
    git add package.json
    git commit -m "[chore]: 버전 {tag_version}으로 업데이트"
-   git push origin rc/{version}
+   git push origin rc/{major}.{minor}.0.0
    ```
-9. **태그 생성:**
+10. **태그 생성:**
+    ```
+    git tag {tag_version}
+    git push origin {tag_version}
+    ```
+11. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
+
+---
+
+**Case B — 기존 RC에 develop 동기화**
+
+4. RC 브랜치 결정: `rc_branch = rc/{major}.{minor}.0.0`
    ```
-   git tag {tag_version}
-   git push origin {tag_version}
+   git branch -r | grep "origin/rc/{major}.{minor}.0.0"
    ```
-10. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
+   브랜치 없으면 에러 후 중단 ("RC 브랜치를 찾을 수 없습니다: {rc_branch}")
+
+5. develop에 RC에 없는 신규 커밋이 있는지 확인:
+   ```
+   git log origin/{rc_branch}..origin/develop --oneline
+   ```
+   없으면 "develop에 반영할 신규 커밋이 없습니다" 안내 후 중단.
+
+6. develop → rc 동기화 PR 생성:
+   ```
+   gh pr create --base {rc_branch} --head develop \
+     --title "chore: sync develop into {rc_branch}" \
+     --body "신규 커밋 목록:\n{커밋 목록}\n\ndevelop 신규 작업을 RC에 반영합니다."
+   ```
+   > ⚠️ rc에 `/rc-fix`로 머지된 커밋이 있고 develop에 없는 경우 충돌 발생 가능. PR에서 충돌 해결 후 머지.
+
+7. PR URL 출력, 사용자에게 머지 요청. 사용자가 머지 완료했다고 알릴 때까지 대기
+
+8. **머지 확인 후 test 번호 증가 태그 생성:**
+   ```
+   git checkout {rc_branch} && git pull origin {rc_branch}
+   git tag --list "{major}.{minor}.0.*" --sort=-v:refname | head -1
+   # test 번호 +1 하여 새 버전 계산
+   NEW_VERSION={major}.{minor}.0.{test+1}
+   ```
+   **package.json 버전 업데이트 및 커밋:**
+   ```
+   npm pkg set version=$NEW_VERSION
+   git add package.json
+   git commit -m "[chore]: 버전 $NEW_VERSION으로 업데이트"
+   git push origin {rc_branch}
+   git tag $NEW_VERSION
+   git push origin $NEW_VERSION
+   ```
+
+9. 새 태그명 출력
 
 ---
 
