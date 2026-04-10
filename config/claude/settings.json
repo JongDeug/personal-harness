@@ -1,4 +1,5 @@
 {
+  "model": "opus",
   "hooks": {
     "PostToolUse": [
       {
@@ -23,6 +24,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "cat > /tmp/claude-rate-limits.json"
+  },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
     "telegram@claude-plugins-official": true,
@@ -30,13 +35,8 @@
     "claude-code-setup@claude-plugins-official": true,
     "code-review@claude-plugins-official": true
   },
-  "skipDangerousModePermissionPrompt": true,
   "language": "Korean",
   "voiceEnabled": true,
   "showThinkingSummaries": true,
-  "model": "sonnet",
-  "statusLine": {
-    "type": "command",
-    "command": "cat > /tmp/claude-rate-limits.json"
-  }
+  "skipDangerousModePermissionPrompt": true
 }
