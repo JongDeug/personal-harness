@@ -11,6 +11,7 @@ description: >
   - /hotfix {version} — 핫픽스 브랜치 생성
   - /finish-hotfix — 핫픽스 완료 및 RC rebase
   개발자가 브랜치 생성, 배포, 핫픽스 등 Git 배포 플로우 단계를 실행할 때 항상 사용.
+owner: jongdeug
 ---
 
 ## 빠른 참조 (TL;DR)
@@ -40,6 +41,7 @@ description: >
   - `hotfix/{version}` — 배포 후 긴급수정 (e.g. `hotfix/2.1.0.0`)
 - **버전 태그 형식**: `Major.Minor.Hotfix.Test`
 
+owner: jongdeug
 ---
 
 ## 커맨드별 실행 절차
@@ -76,6 +78,7 @@ feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
    ```
 6. 생성된 PR URL 출력
 
+owner: jongdeug
 ---
 
 ### `/start-rc`
@@ -124,6 +127,7 @@ feature 작업을 완료하고 push 후 develop으로 PR을 생성한다.
     ```
 11. 생성 완료 메시지 + RC 중 버그 발견 시 `/rc-fix {issue-key}` 사용 안내
 
+owner: jongdeug
 ---
 
 **Case B — 기존 RC에 develop 동기화**
@@ -211,6 +215,7 @@ RC 테스트 중 버그 발견 시 수정 브랜치를 생성하고, 머지 후 
    (예: 최신 태그 `2.1.0.1` → 새 태그 `2.1.0.2`)
 9. 새 태그명 출력
 
+owner: jongdeug
 ---
 
 ### `/revert-issue {issue-key}`
@@ -274,6 +279,7 @@ RC를 PR을 통해 main과 develop에 머지하고 배포 태그를 생성한다
 9. 최종 `git fetch origin && git diff origin/develop origin/main` 동기화 확인
 10. 배포 완료 메시지 출력
 
+owner: jongdeug
 ---
 
 ### `/hotfix {version}`
@@ -310,6 +316,7 @@ RC를 PR을 통해 main과 develop에 머지하고 배포 태그를 생성한다
    - rc 브랜치 없으면 스킵
 7. 완료 메시지 출력
 
+owner: jongdeug
 ---
 
 ## 공통 주의사항

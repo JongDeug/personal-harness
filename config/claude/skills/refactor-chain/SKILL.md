@@ -4,6 +4,7 @@ description: >
   코드베이스 대상으로 "분석 → 리팩터 → 테스트 → 리뷰" 4단계 체인을 실행하는 스킬.
   /refactor-chain {target-path} 명령어 입력 시 반드시 이 스킬을 사용한다.
   각 단계는 독립 서브에이전트로 실행되며, 이전 단계 결과가 다음 단계 프롬프트에 주입된다.
+owner: jongdeug
 ---
 
 ## 사용법
@@ -30,6 +31,7 @@ Agent 도구를 호출하기 전에 메인이 직접 실행:
    - 30개 초과 시 사용자에게 경고 (타임아웃 위험)
 5. 수집된 파일 목록을 `TARGET_FILES`로 저장
 
+owner: jongdeug
 ---
 
 ## Step 1: 분석 에이전트
@@ -124,6 +126,7 @@ Agent 도구를 호출하기 전에 메인이 직접 실행:
 - 사용자에게 변경된 파일 목록 보고
 - **중단 조건**: changed_files가 0개 → 사용자에게 알리고 계속 진행 여부 확인
 
+owner: jongdeug
 ---
 
 ## Step 3: 테스트 에이전트
@@ -230,6 +233,7 @@ Step 1~3 결과를 모두 주입하여 **Agent 도구**를 호출한다.
 - approved: false 또는 blocker 코멘트가 있으면 강조 표시
 - unresolved_issues 목록 출력
 
+owner: jongdeug
 ---
 
 ## 실패 처리 원칙

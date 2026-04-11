@@ -4,6 +4,7 @@ description: >
   PostToolUse 훅으로 동작하는 README.md 구조 동기화 스킬.
   파일 생성/삭제 등 디렉토리 구조 변경이 감지되면 README.md의 구조 섹션 업데이트를 안내한다.
   훅에서 "[sync-readme]" 메시지를 수신하면 이 스킬의 지침을 따른다.
+owner: jongdeug
 ---
 
 ## 개요
