@@ -72,7 +72,7 @@ description: 한 줄 요약 (RSS/SEO용)
 ## Workflow
 
 1. 주제/의도 짧게 확인
-2. 초안은 `.omc/drafts/<slug>-vN.md`에 저장 (덮어쓰지 않기)
+2. 초안은 `~/.claude/drafts/blog/<slug>-vN.md`에 저장 (덮어쓰지 않기)
 3. 경로 + 주요 포인트 3~5줄 요약을 텔레그램 reply로 보고
 4. 피드백 반영 시 v번호 올려 새 파일로 저장
 5. 확정되면 `Resource/blog/<category>/<제목>.md`로 복사 + `chown jongdeug:gpio`

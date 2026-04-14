@@ -40,7 +40,6 @@ done | sort
 - `code-review:code-review` — PR 리뷰
 - `skill-creator:skill-creator` — 스킬 생성
 - `claude-code-setup:claude-automation-recommender` — Claude Code 자동화 추천
-- `oh-my-claudecode:*` — OMC 스킬 계열 (ralph, autopilot, ultrawork, team, ...)
 
 세션 컨텍스트에 다른 스킬이 추가로 주입되어 있으면 그것도 포함한다.
 
