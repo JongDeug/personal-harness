@@ -6,6 +6,7 @@ description: >
   - /weekly-report {날짜} 또는 /weekly-report {시작~끝} 명령어 입력
   - "주간보고", "weekly report", "주간 리포트" 등의 키워드 포함 요청
   Jira MC 프로젝트에서 이슈를 조회하고, GitHub PR을 참고하여 Google Sheets에 주간보고를 자동 작성한다.
+owner: jongdeug
 ---
 
 ## 빠른 참조 (TL;DR)
@@ -27,6 +28,7 @@ JIRA_PROJECT: MC
 GITHUB_REPO: tnh9570/medichis-apiServer
 ```
 
+owner: jongdeug
 ---
 
 ## 실행 절차
@@ -57,6 +59,7 @@ GITHUB_REPO: tnh9570/medichis-apiServer
 
 **참고**: 서식(셀 병합, 테두리, 색상, 열 너비 등)을 유지하기 위해 Google Sheets UI에서 직접 복제해야 한다. MCP 도구로는 시트 탭 복제/삭제/border 적용이 불가능.
 
+owner: jongdeug
 ---
 
 ### Step 3: Jira 이슈 조회
@@ -105,6 +108,7 @@ project = MC AND resolutiondate >= "YYYY-MM-DD" AND resolutiondate <= "YYYY-MM-D
   - 리뷰중/리뷰완료 → 코드 개선 작업 중 → 기능 개선
   - 완료 → DB 요청/단순 수정 → 요청
 
+owner: jongdeug
 ---
 
 ### Step 5: 구현사항(C열) 결정
@@ -138,6 +142,7 @@ project = MC AND resolutiondate >= "YYYY-MM-DD" AND resolutiondate <= "YYYY-MM-D
 | F (진행현황) | 상태 | `완료`/`Released`→"완료", 그 외→해당 상태명 |
 | G (비고) | 비고 | 빈칸 |
 
+owner: jongdeug
 ---
 
 ### Step 7: 사용자 확인 및 시트 작성

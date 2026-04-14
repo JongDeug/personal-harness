@@ -6,6 +6,7 @@ description: >
   "test:cov 결과 공유" 등의 요청 시 반드시 이 스킬을 사용한다.
   pnpm, npm, yarn 등 패키지 매니저를 자동 감지하며, Jest/Vitest 출력을 파싱한다.
   수신자 이메일을 인자로 받아 Gmail SMTP로 발송하며, 어떤 JS/TS 프로젝트에서도 동작한다.
+owner: jongdeug
 ---
 
 ## 사용법

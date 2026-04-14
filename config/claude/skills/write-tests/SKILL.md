@@ -8,6 +8,7 @@ description: >
   - 기존 코드 수정 후 테스트 추가
   - "테스트 작성", "테스트 코드", "unit test", "테스트 추가", "spec 파일" 등의 키워드 포함 요청
   - PR 준비 전 테스트 코드 점검
+owner: jongdeug
 ---
 
 ## 실행 절차
@@ -32,6 +33,7 @@ description: >
 
 현재 디렉토리의 언어/프레임워크를 파악한 후 해당 섹션을 적용한다.
 
+owner: jongdeug
 ---
 
 ## 1. 작성 의무
@@ -50,6 +52,7 @@ description: >
 | 일반 코드 | 70% 이상 |
 | 핵심 비즈니스 로직 | 90% 이상 |
 
+owner: jongdeug
 ---
 
 ## 3. 테스트 케이스 3종 구성
@@ -230,6 +233,7 @@ pnpm test --testPathPattern=<파일명>         # 특정 파일
 pnpm test:watch                              # watch 모드
 ```
 
+owner: jongdeug
 ---
 
 ## 5. Go

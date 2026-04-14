@@ -1,7 +1,5 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
+  "model": "opus",
   "hooks": {
     "PostToolUse": [
       {
@@ -28,7 +26,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "node ${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hud/omc-hud.mjs"
+    "command": "cat > /tmp/claude-rate-limits.json"
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
@@ -46,17 +44,9 @@
       }
     }
   },
+  "extraKnownMarketplaces": {},
   "language": "Korean",
   "voiceEnabled": true,
   "showThinkingSummaries": true,
-  "skipDangerousModePermissionPrompt": true,
-  "mcpServers": {
-    "drawio": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@drawio/mcp"
-      ]
-    }
-  }
+  "skipDangerousModePermissionPrompt": true
 }

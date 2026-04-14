@@ -1,6 +1,7 @@
 ---
 name: upbit-openapi-skill
 description: Operate Upbit public exchange market APIs through UXC with a curated OpenAPI schema, market-first discovery, and explicit private-auth boundary notes.
+owner: jongdeug
 ---
 
 # Upbit Open API Skill

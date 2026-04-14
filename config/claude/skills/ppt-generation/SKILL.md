@@ -1,602 +1,325 @@
 ---
 name: ppt-generation
-description: Use this skill when the user requests to generate, create, or make presentations (PPT/PPTX). Creates visually rich slides by generating images for each slide and composing them into a PowerPoint file.
+description: Use this skill when the user requests to generate, create, or make presentations (PPT/PPTX). Default workflow uses HTML+CSS slides rendered locally via Playwright (offline, pixel-perfect, Korean-friendly). AI image-generation path is provided as an alternative.
 ---
 
 # PPT Generation Skill
 
-## Overview
+종환님 머신 전용 — HTML/CSS로 1920×1080 슬라이드를 직접 코딩하고 Playwright로 PNG를 찍은 뒤 python-pptx로 PPTX를 컴파일한다. 인터넷 없이 동작하고 한글/레이아웃을 정밀 제어할 수 있어 **기본 워크플로우로 채택**.
 
-This skill generates professional PowerPoint presentations by creating AI-generated images for each slide and composing them into a PPTX file. The workflow includes planning the presentation structure with a consistent visual style, generating slide images sequentially (using the previous slide as a reference for style consistency), and assembling them into a final presentation.
+AI 이미지 생성 경로(`/mnt/skills/public/image-generation`)는 종환님 머신엔 없으므로 사용 금지. 그 워크플로우는 문서 맨 아래 "Alternative" 섹션에 보관만 한다.
 
-## Core Capabilities
+---
 
-- Plan and structure multi-slide presentations with unified visual style
-- Support multiple presentation styles: Business, Academic, Minimal, Apple Keynote, Creative
-- Generate unique AI images for each slide using image-generation skill
-- Maintain visual consistency by using previous slide as reference image
-- Compose images into a professional PPTX file
+## Primary Workflow — HTML + Playwright (Local)
 
-## Presentation Styles
-
-Choose one of the following styles when creating the presentation plan:
-
-| Style | Description | Best For |
-|-------|-------------|----------|
-| **glassmorphism** | Frosted glass panels with blur effects, floating translucent cards, vibrant gradient backgrounds, depth through layering | Tech products, AI/SaaS demos, futuristic pitches |
-| **dark-premium** | Rich black backgrounds (#0a0a0a), luminous accent colors, subtle glow effects, luxury brand aesthetic | Premium products, executive presentations, high-end brands |
-| **gradient-modern** | Bold mesh gradients, fluid color transitions, contemporary typography, vibrant yet sophisticated | Startups, creative agencies, brand launches |
-| **neo-brutalist** | Raw bold typography, high contrast, intentional "ugly" aesthetic, anti-design as design, Memphis-inspired | Edgy brands, Gen-Z targeting, disruptive startups |
-| **3d-isometric** | Clean isometric illustrations, floating 3D elements, soft shadows, tech-forward aesthetic | Tech explainers, product features, SaaS presentations |
-| **editorial** | Magazine-quality layouts, sophisticated typography hierarchy, dramatic photography, Vogue/Bloomberg aesthetic | Annual reports, luxury brands, thought leadership |
-| **minimal-swiss** | Grid-based precision, Helvetica-inspired typography, bold use of negative space, timeless modernism | Architecture, design firms, premium consulting |
-| **keynote** | Apple-inspired aesthetic with bold typography, dramatic imagery, high contrast, cinematic feel | Keynotes, product reveals, inspirational talks |
-
-## Workflow
-
-### Step 1: Understand Requirements
-
-When a user requests presentation generation, identify:
-
-- Topic/subject: What is the presentation about
-- Number of slides: How many slides are needed (default: 5-10)
-- **Style**: business / academic / minimal / keynote / creative
-- Aspect ratio: Standard (16:9) or classic (4:3)
-- Content outline: Key points for each slide
-- You don't need to check the folder under `/mnt/user-data`
-
-### Step 2: Create Presentation Plan
-
-Create a JSON file in `/mnt/user-data/workspace/` with the presentation structure. **Important**: Include the `style` field to define the overall visual consistency.
-
-```json
-{
-  "title": "Presentation Title",
-  "style": "keynote",
-  "style_guidelines": {
-    "color_palette": "Deep black backgrounds, white text, single accent color (blue or orange)",
-    "typography": "Bold sans-serif headlines, clean body text, dramatic size contrast",
-    "imagery": "High-quality photography, full-bleed images, cinematic composition",
-    "layout": "Generous whitespace, centered focus, minimal elements per slide"
-  },
-  "aspect_ratio": "16:9",
-  "slides": [
-    {
-      "slide_number": 1,
-      "type": "title",
-      "title": "Main Title",
-      "subtitle": "Subtitle or tagline",
-      "visual_description": "Detailed description for image generation"
-    },
-    {
-      "slide_number": 2,
-      "type": "content",
-      "title": "Slide Title",
-      "key_points": ["Point 1", "Point 2", "Point 3"],
-      "visual_description": "Detailed description for image generation"
-    }
-  ]
-}
-```
-
-### Step 3: Generate Slide Images Sequentially
-
-**IMPORTANT**: Generate slides **strictly one by one, in order**. Do NOT parallelize or batch image generation. Each slide depends on the previous slide's output as a reference image. Generating slides in parallel will break visual consistency and is not allowed.
-
-1. Read the image-generation skill: `/mnt/skills/public/image-generation/SKILL.md`
-
-2. **For the FIRST slide (slide 1)**, create a prompt that establishes the visual style:
-
-```json
-{
-  "prompt": "Professional presentation slide. [style_guidelines from plan]. Title: 'Your Title'. [visual_description]. This slide establishes the visual language for the entire presentation.",
-  "style": "[Based on chosen style - e.g., Apple Keynote aesthetic, dramatic lighting, cinematic]",
-  "composition": "Clean layout with clear text hierarchy, [style-specific composition]",
-  "color_palette": "[From style_guidelines]",
-  "typography": "[From style_guidelines]"
-}
-```
+### 0. 작업 디렉터리 셋업
 
 ```bash
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/slide-01-prompt.json \
-  --output-file /mnt/user-data/outputs/slide-01.jpg \
-  --aspect-ratio 16:9
+mkdir -p /tmp/<project>/screenshots
+cd /tmp/<project>
 ```
 
-3. **For subsequent slides (slide 2+)**, use the PREVIOUS slide as a reference image:
-
-```json
-{
-  "prompt": "Professional presentation slide continuing the visual style from the reference image. Maintain the same color palette, typography style, and overall aesthetic. Title: 'Slide Title'. [visual_description]. Keep visual consistency with the reference.",
-  "style": "Match the style of the reference image exactly",
-  "composition": "Similar layout principles as reference, adapted for this content",
-  "color_palette": "Same as reference image",
-  "consistency_note": "This slide must look like it belongs in the same presentation as the reference image"
-}
-```
+스킬에 박혀 있는 템플릿/스크립트 한 번에 복사:
 
 ```bash
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/slide-02-prompt.json \
-  --reference-images /mnt/user-data/outputs/slide-01.jpg \
-  --output-file /mnt/user-data/outputs/slide-02.jpg \
-  --aspect-ratio 16:9
+cp /home/jongdeug/.claude/skills/ppt-generation/templates/slide-base.html /tmp/<project>/slide01.html
+cp /home/jongdeug/.claude/skills/ppt-generation/scripts/render.js        /tmp/<project>/render.js
+cp /home/jongdeug/.claude/skills/ppt-generation/scripts/compile.py       /tmp/<project>/compile.py
 ```
 
-4. **Continue for all remaining slides**, always referencing the previous slide:
+### 1. 슬라이드 기획
+
+각 슬라이드의 역할/메시지를 한 줄씩 적은 outline 작성 후 사용자 확인. 5~10장이 표준.
+
+### 2. HTML 작성 (`slide01.html` … `slideNN.html`)
+
+- 파일명은 `slide01.html`, `slide02.html` … 두 자리 패딩 필수 (정렬 안전)
+- 1920×1080 고정. 콘텐츠가 1080을 넘어가면 잘림 → **무조건 viewport 안에 들어와야 함**
+- `templates/slide-base.html`을 시작점으로 쓰고 그 위에 콘텐츠만 얹기
+- 디자인 일관성: 모든 슬라이드가 같은 top-bar / 폰트 / 배경 / 카드 스타일을 공유해야 함
+
+### 3. Playwright 렌더링
 
 ```bash
-# Slide 3 references slide 2
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/slide-03-prompt.json \
-  --reference-images /mnt/user-data/outputs/slide-02.jpg \
-  --output-file /mnt/user-data/outputs/slide-03.jpg \
-  --aspect-ratio 16:9
-
-# Slide 4 references slide 3
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/slide-04-prompt.json \
-  --reference-images /mnt/user-data/outputs/slide-03.jpg \
-  --output-file /mnt/user-data/outputs/slide-04.jpg \
-  --aspect-ratio 16:9
+NODE_PATH=/home/jongdeug/.claude/channels/telegram/jongdeug/scripts/node_modules \
+  node /tmp/<project>/render.js
 ```
 
-### Step 4: Compose PPT
+- playwright 모듈은 종환님 머신에서 위 경로에만 설치돼 있다 → **반드시 NODE_PATH 지정**
+- `render.js`는 `slide*.html`을 자동 검색해서 동일한 이름의 PNG를 `screenshots/`에 떨군다
 
-After all slide images are generated, call the composition script:
+### 4. ⭐ Visual QA — 반드시 PNG를 직접 본다
+
+렌더링 직후 **모든 슬라이드 PNG를 Read 툴로 열어 육안 검수**. 이 단계 빼먹으면 사고남.
+
+```
+Read /tmp/<project>/screenshots/slide01.png
+Read /tmp/<project>/screenshots/slide02.png
+...
+```
+
+체크리스트:
+- [ ] 콘텐츠가 1080px 안에 다 들어와 있나? (잘린 부분 없나)
+- [ ] 한글이 □□□ 로 깨지지 않았나? (Noto Sans KR 폴백 잘 잡혔나)
+- [ ] 이모지/아이콘이 빈 네모로 안 나오나? (Font Awesome 제대로 로드됐나)
+- [ ] 디자인 톤이 모든 슬라이드에서 일관적인가? (top-bar/배경/폰트)
+- [ ] 텍스트가 카드 박스를 넘쳐 흐르지 않나?
+
+이상하면 그 슬라이드만 HTML 수정 후 → "단일 슬라이드 재생성" 절차로 갱신.
+
+### 5. PPTX 컴파일
 
 ```bash
-python /mnt/skills/public/ppt-generation/scripts/generate.py \
-  --plan-file /mnt/user-data/workspace/presentation-plan.json \
-  --slide-images /mnt/user-data/outputs/slide-01.jpg /mnt/user-data/outputs/slide-02.jpg /mnt/user-data/outputs/slide-03.jpg \
-  --output-file /mnt/user-data/outputs/presentation.pptx
+python3 /tmp/<project>/compile.py
 ```
 
-Parameters:
+- `compile.py`는 `screenshots/slide*.png`를 sorted 순서로 묶어 `<project>.pptx`를 만든다
+- 출력 파일명은 컴파일 스크립트 상단에서 `OUTPUT_PATH` 변수로 조정
 
-- `--plan-file`: Absolute path to the presentation plan JSON file (required)
-- `--slide-images`: Absolute paths to slide images in order (required, space-separated)
-- `--output-file`: Absolute path to output PPTX file (required)
-
-[!NOTE]
-Do NOT read the python file, just call it with the parameters.
-
-## Complete Example: Glassmorphism Style (最现代前卫)
-
-User request: "Create a presentation about AI product launch"
-
-### Step 1: Create presentation plan
-
-Create `/mnt/user-data/workspace/ai-product-plan.json`:
-```json
-{
-  "title": "Introducing Nova AI",
-  "style": "glassmorphism",
-  "style_guidelines": {
-    "color_palette": "Vibrant purple-to-cyan gradient background (#667eea→#00d4ff), frosted glass panels with 15-20% white opacity, electric accents",
-    "typography": "SF Pro Display style, bold 700 weight white titles with subtle text-shadow, clean 400 weight body text, excellent contrast on glass",
-    "imagery": "Abstract 3D glass spheres, floating translucent geometric shapes, soft luminous orbs, depth through layered transparency",
-    "layout": "Centered frosted glass cards with 32px rounded corners, 48-64px padding, floating above gradient, layered depth with soft shadows",
-    "effects": "Backdrop blur 20-40px on glass panels, subtle white border glow, soft colored shadows matching gradient, light refraction effects",
-    "visual_language": "Apple Vision Pro / visionOS aesthetic, premium depth through transparency, futuristic yet approachable, 2024 design trends"
-  },
-  "aspect_ratio": "16:9",
-  "slides": [
-    {
-      "slide_number": 1,
-      "type": "title",
-      "title": "Introducing Nova AI",
-      "subtitle": "Intelligence, Reimagined",
-      "visual_description": "Stunning gradient background flowing from deep purple (#667eea) through magenta to cyan (#00d4ff). Center: large frosted glass panel with strong backdrop blur, containing bold white title 'Introducing Nova AI' and lighter subtitle. Floating 3D glass spheres and abstract shapes around the card creating depth. Soft glow emanating from behind the glass panel. Premium visionOS aesthetic. The glass card has subtle white border (1px rgba 255,255,255,0.3) and soft purple-tinted shadow."
-    },
-    {
-      "slide_number": 2,
-      "type": "content",
-      "title": "Why Nova?",
-      "key_points": ["10x faster processing", "Human-like understanding", "Enterprise-grade security"],
-      "visual_description": "Same purple-cyan gradient background. Left side: floating frosted glass card with title 'Why Nova?' in bold white, three key points below with subtle glass pill badges. Right side: abstract 3D visualization of neural network as interconnected glass nodes with soft glow. Floating translucent geometric shapes (icosahedrons, tori) adding depth. Consistent glassmorphism aesthetic with previous slide."
-    },
-    {
-      "slide_number": 3,
-      "type": "content",
-      "title": "How It Works",
-      "key_points": ["Natural language input", "Multi-modal processing", "Instant insights"],
-      "visual_description": "Gradient background consistent with previous slides. Central composition: three stacked frosted glass cards at slight angles showing the workflow steps, connected by soft glowing lines. Each card has an abstract icon. Floating glass orbs and light particles around the composition. Title 'How It Works' in bold white at top. Depth created through card layering and transparency."
-    },
-    {
-      "slide_number": 4,
-      "type": "content",
-      "title": "Built for Scale",
-      "key_points": ["1M+ concurrent users", "99.99% uptime", "Global infrastructure"],
-      "visual_description": "Same gradient background. Asymmetric layout: right side features large frosted glass panel with metrics displayed in bold typography. Left side: abstract 3D globe made of glass panels and connection lines, representing global scale. Floating data visualization elements as small glass cards with numbers. Soft ambient glow throughout. Premium tech aesthetic."
-    },
-    {
-      "slide_number": 5,
-      "type": "conclusion",
-      "title": "The Future Starts Now",
-      "subtitle": "Join the waitlist",
-      "visual_description": "Dramatic finale slide. Gradient background with slightly increased vibrancy. Central frosted glass card with bold title 'The Future Starts Now' and call-to-action subtitle. Behind the card: burst of soft light rays and floating glass particles creating celebration effect. Multiple layered glass shapes creating depth. The most visually impactful slide while maintaining style consistency."
-    }
-  ]
-}
-```
-
-### Step 2: Read image-generation skill
-
-Read `/mnt/skills/public/image-generation/SKILL.md` to understand how to generate images.
-
-### Step 3: Generate slide images sequentially with reference chaining
-
-**Slide 1 - Title (establishes the visual language):**
-
-Create `/mnt/user-data/workspace/nova-slide-01.json`:
-```json
-{
-  "prompt": "Ultra-premium presentation title slide with glassmorphism design. Background: smooth flowing gradient from deep purple (#667eea) through magenta (#f093fb) to cyan (#00d4ff), soft and vibrant. Center: large frosted glass panel with strong backdrop blur effect, rounded corners 32px, containing bold white sans-serif title 'Introducing Nova AI' (72pt, SF Pro Display style, font-weight 700) with subtle text shadow, subtitle 'Intelligence, Reimagined' below in lighter weight. The glass panel has subtle white border (1px rgba 255,255,255,0.25) and soft purple-tinted drop shadow. Floating around the card: 3D glass spheres with refraction, translucent geometric shapes (icosahedrons, abstract blobs), creating depth and dimension. Soft luminous glow emanating from behind the glass panel. Small floating particles of light. Apple Vision Pro / visionOS UI aesthetic. Professional presentation slide, 16:9 aspect ratio. Hyper-modern, premium tech product launch feel.",
-  "style": "Glassmorphism, visionOS aesthetic, Apple Vision Pro UI style, premium tech, 2024 design trends",
-  "composition": "Centered glass card as focal point, floating 3D elements creating depth at edges, 40% negative space, clear visual hierarchy",
-  "lighting": "Soft ambient glow from gradient, light refraction through glass elements, subtle rim lighting on 3D shapes",
-  "color_palette": "Purple gradient #667eea, magenta #f093fb, cyan #00d4ff, frosted white rgba(255,255,255,0.15), pure white text #ffffff",
-  "effects": "Backdrop blur on glass panels, soft drop shadows with color tint, light refraction, subtle noise texture on glass, floating particles"
-}
-```
-
-```bash
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/nova-slide-01.json \
-  --output-file /mnt/user-data/outputs/nova-slide-01.jpg \
-  --aspect-ratio 16:9
-```
-
-**Slide 2 - Content (MUST reference slide 1 for consistency):**
-
-Create `/mnt/user-data/workspace/nova-slide-02.json`:
-```json
-{
-  "prompt": "Presentation slide continuing EXACT visual style from reference image. SAME purple-to-cyan gradient background, SAME glassmorphism aesthetic, SAME typography style. Left side: frosted glass card with backdrop blur containing title 'Why Nova?' in bold white (matching reference font style), three feature points as subtle glass pill badges below. Right side: abstract 3D neural network visualization made of interconnected glass nodes with soft cyan glow, floating in space. Floating translucent geometric shapes (matching style from reference) adding depth. The frosted glass has identical treatment: white border, purple-tinted shadow, same blur intensity. CRITICAL: This slide must look like it belongs in the exact same presentation as the reference image - same colors, same glass treatment, same overall aesthetic.",
-  "style": "MATCH REFERENCE EXACTLY - Glassmorphism, visionOS aesthetic, same visual language",
-  "composition": "Asymmetric split: glass card left (40%), 3D visualization right (40%), breathing room between elements",
-  "color_palette": "EXACTLY match reference: purple #667eea, cyan #00d4ff gradient, same frosted white treatment, same text white",
-  "consistency_note": "CRITICAL: Must be visually identical in style to reference image. Same gradient colors, same glass blur intensity, same shadow treatment, same typography weight and style. Viewer should immediately recognize this as the same presentation."
-}
-```
-
-```bash
-python /mnt/skills/public/image-generation/scripts/generate.py \
-  --prompt-file /mnt/user-data/workspace/nova-slide-02.json \
-  --reference-images /mnt/user-data/outputs/nova-slide-01.jpg \
-  --output-file /mnt/user-data/outputs/nova-slide-02.jpg \
-  --aspect-ratio 16:9
-```
-
-**Slides 3-5: Continue the same pattern, each referencing the previous slide**
-
-Key consistency rules for subsequent slides:
-- Always include "continuing EXACT visual style from reference image" in prompt
-- Specify "SAME gradient background", "SAME glass treatment", "SAME typography"
-- Include `consistency_note` emphasizing style matching
-- Reference the immediately previous slide image
-
-### Step 4: Compose final PPT
-
-```bash
-python /mnt/skills/public/ppt-generation/scripts/generate.py \
-  --plan-file /mnt/user-data/workspace/nova-plan.json \
-  --slide-images /mnt/user-data/outputs/nova-slide-01.jpg /mnt/user-data/outputs/nova-slide-02.jpg /mnt/user-data/outputs/nova-slide-03.jpg /mnt/user-data/outputs/nova-slide-04.jpg /mnt/user-data/outputs/nova-slide-05.jpg \
-  --output-file /mnt/user-data/outputs/nova-presentation.pptx
-```
-
-## Style-Specific Guidelines
-
-### Glassmorphism Style (推荐 - 最现代前卫)
-```json
-{
-  "style": "glassmorphism",
-  "style_guidelines": {
-    "color_palette": "Vibrant gradient backgrounds (purple #667eea to pink #f093fb, or cyan #4facfe to blue #00f2fe), frosted white panels with 20% opacity, accent colors that pop against the gradient",
-    "typography": "SF Pro Display or Inter font style, bold 600-700 weight titles, clean 400 weight body, white text with subtle drop shadow for readability on glass",
-    "imagery": "Abstract 3D shapes floating in space, soft blurred orbs, geometric primitives with glass material, depth through overlapping translucent layers",
-    "layout": "Floating card panels with backdrop-blur effect, generous padding (48-64px), rounded corners (24-32px radius), layered depth with subtle shadows",
-    "effects": "Frosted glass blur (backdrop-filter: blur 20px), subtle white border (1px rgba 255,255,255,0.2), soft glow behind panels, floating elements with drop shadows",
-    "visual_language": "Premium tech aesthetic like Apple Vision Pro UI, depth through transparency, light refracting through glass surfaces"
-  }
-}
-```
-
-### Dark Premium Style
-```json
-{
-  "style": "dark-premium",
-  "style_guidelines": {
-    "color_palette": "Deep black base (#0a0a0a to #121212), luminous accent color (electric blue #00d4ff, neon purple #bf5af2, or gold #ffd700), subtle gray gradients for depth (#1a1a1a to #0a0a0a)",
-    "typography": "Elegant sans-serif (Neue Haas Grotesk or Suisse Int'l style), dramatic size contrast (72pt+ headlines, 18pt body), letter-spacing -0.02em for headlines, pure white (#ffffff) text",
-    "imagery": "Dramatic studio lighting, rim lights and edge glow, cinematic product shots, abstract light trails, premium material textures (brushed metal, matte surfaces)",
-    "layout": "Generous negative space (60%+), asymmetric balance, content anchored to grid but with breathing room, single focal point per slide",
-    "effects": "Subtle ambient glow behind key elements, light bloom effects, grain texture overlay (2-3% opacity), vignette on edges",
-    "visual_language": "Luxury tech brand aesthetic (Bang & Olufsen, Porsche Design), sophistication through restraint, every element intentional"
-  }
-}
-```
-
-### Gradient Modern Style
-```json
-{
-  "style": "gradient-modern",
-  "style_guidelines": {
-    "color_palette": "Bold mesh gradients (Stripe/Linear style: purple-pink-orange #7c3aed→#ec4899→#f97316, or cool tones: cyan-blue-purple #06b6d4→#3b82f6→#8b5cf6), white or dark text depending on background intensity",
-    "typography": "Modern geometric sans-serif (Satoshi, General Sans, or Clash Display style), variable font weights, oversized bold headlines (80pt+), comfortable body text (20pt)",
-    "imagery": "Abstract fluid shapes, morphing gradients, 3D rendered abstract objects, soft organic forms, floating geometric primitives",
-    "layout": "Dynamic asymmetric compositions, overlapping elements with blend modes, text integrated with gradient flows, full-bleed backgrounds",
-    "effects": "Smooth gradient transitions, subtle noise texture (3-5% for depth), soft shadows with color tint matching gradient, motion blur suggesting movement",
-    "visual_language": "Contemporary SaaS aesthetic (Stripe, Linear, Vercel), energetic yet professional, forward-thinking tech vibes"
-  }
-}
-```
-
-### Neo-Brutalist Style
-```json
-{
-  "style": "neo-brutalist",
-  "style_guidelines": {
-    "color_palette": "High contrast primaries: stark black, pure white, with bold accent (hot pink #ff0080, electric yellow #ffff00, or raw red #ff0000), optional: Memphis-inspired pastels as secondary",
-    "typography": "Ultra-bold condensed type (Impact, Druk, or Bebas Neue style), UPPERCASE headlines, extreme size contrast, intentionally tight or overlapping letter-spacing",
-    "imagery": "Raw unfiltered photography, intentional visual noise, halftone patterns, cut-out collage aesthetic, hand-drawn elements, stickers and stamps",
-    "layout": "Broken grid, overlapping elements, thick black borders (4-8px), visible structure, anti-whitespace (dense but organized chaos)",
-    "effects": "Hard shadows (no blur, offset 8-12px), pixelation accents, scan lines, CRT screen effects, intentional 'mistakes'",
-    "visual_language": "Anti-corporate rebellion, DIY zine aesthetic meets digital, raw authenticity, memorable through boldness"
-  }
-}
-```
-
-### 3D Isometric Style
-```json
-{
-  "style": "3d-isometric",
-  "style_guidelines": {
-    "color_palette": "Soft contemporary palette: muted purples (#8b5cf6), teals (#14b8a6), warm corals (#fb7185), with cream or light gray backgrounds (#fafafa), consistent saturation across elements",
-    "typography": "Friendly geometric sans-serif (Circular, Gilroy, or Quicksand style), medium weight headlines, excellent readability, comfortable 24pt body text",
-    "imagery": "Clean isometric 3D illustrations, consistent 30° isometric angle, soft clay-render aesthetic, floating platforms and devices, cute simplified objects",
-    "layout": "Central isometric scene as hero, text balanced around 3D elements, clear visual hierarchy, comfortable margins (64px+)",
-    "effects": "Soft drop shadows (20px blur, 30% opacity), ambient occlusion on 3D objects, subtle gradients on surfaces, consistent light source (top-left)",
-    "visual_language": "Friendly tech illustration (Slack, Notion, Asana style), approachable complexity, clarity through simplification"
-  }
-}
-```
-
-### Editorial Style
-```json
-{
-  "style": "editorial",
-  "style_guidelines": {
-    "color_palette": "Sophisticated neutrals: off-white (#f5f5f0), charcoal (#2d2d2d), with single accent color (burgundy #7c2d12, forest #14532d, or navy #1e3a5f), occasional full-color photography",
-    "typography": "Refined serif for headlines (Playfair Display, Freight, or Editorial New style), clean sans-serif for body (Söhne, Graphik), dramatic size hierarchy (96pt headlines, 16pt body), generous line-height 1.6",
-    "imagery": "Magazine-quality photography, dramatic crops, full-bleed images, portraits with intentional negative space, editorial lighting (Vogue, Bloomberg Businessweek style)",
-    "layout": "Sophisticated grid system (12-column), intentional asymmetry, pull quotes as design elements, text wrapping around images, elegant margins",
-    "effects": "Minimal effects - let photography and typography shine, subtle image treatments (slight desaturation, film grain), elegant borders and rules",
-    "visual_language": "High-end magazine aesthetic, intellectual sophistication, content elevated through design restraint"
-  }
-}
-```
-
-### Minimal Swiss Style
-```json
-{
-  "style": "minimal-swiss",
-  "style_guidelines": {
-    "color_palette": "Pure white (#ffffff) or off-white (#fafaf9) backgrounds, true black (#000000) text, single bold accent (Swiss red #ff0000, Klein blue #002fa7, or signal yellow #ffcc00)",
-    "typography": "Helvetica Neue or Aktiv Grotesk, strict type scale (12/16/24/48/96), medium weight for body, bold for emphasis only, flush-left ragged-right alignment",
-    "imagery": "Objective photography, geometric shapes, clean iconography, mathematical precision, intentional empty space as compositional element",
-    "layout": "Strict grid adherence (baseline grid visible in spirit), modular compositions, generous whitespace (40%+ of slide), content aligned to invisible grid lines",
-    "effects": "None - purity of form, no shadows, no gradients, no decorative elements, occasional single hairline rules",
-    "visual_language": "International Typographic Style, form follows function, timeless modernism, Dieter Rams-inspired restraint"
-  }
-}
-```
-
-### Keynote Style (Apple风格)
-```json
-{
-  "style": "keynote",
-  "style_guidelines": {
-    "color_palette": "Deep blacks (#000000 to #1d1d1f), pure white text, signature blue (#0071e3) or gradient accents (purple-pink for creative, blue-teal for tech)",
-    "typography": "San Francisco Pro Display, extreme weight contrast (bold 80pt+ titles, light 24pt body), negative letter-spacing on headlines (-0.03em), optical alignment",
-    "imagery": "Cinematic photography, shallow depth of field, dramatic lighting (rim lights, spot lighting), product hero shots with reflections, full-bleed imagery",
-    "layout": "Maximum negative space, single powerful image or statement per slide, content centered or dramatically offset, no clutter",
-    "effects": "Subtle gradient overlays, light bloom and glow on key elements, reflection on surfaces, smooth gradient backgrounds",
-    "visual_language": "Apple WWDC keynote aesthetic, confidence through simplicity, every pixel considered, theatrical presentation"
-  }
-}
-```
-
-## Output Handling
-
-After generation:
-
-- The PPTX file is saved in `/mnt/user-data/outputs/`
-- Share the generated presentation with user using `present_files` tool
-- Also share the individual slide images if requested
-- Provide brief description of the presentation
-- Offer to iterate or regenerate specific slides if needed
-
-## Alternative: HTML/CSS + Playwright (Local Rendering)
-
-AI 이미지 생성 대신 HTML/CSS로 슬라이드를 직접 코딩하고 Playwright로 스크린샷 찍는 방식.
-**품질이 더 높고, 인터넷 없이도 동작하며, 한글/레이아웃 정밀 제어 가능.**
-
-### 워크플로우
-
-1. 각 슬라이드를 1920×1080 HTML 파일로 작성 (`/tmp/html-ppt/slideN.html`)
-2. Playwright로 스크린샷 캡처 (`/tmp/html-ppt/screenshots/slideN.png`)
-3. python-pptx로 PNG 이미지들을 PPTX로 컴파일
-
-### Playwright 스크린샷 코드
+### 6. 텔레그램 전송
 
 ```python
-from playwright.sync_api import sync_playwright
-import os
-
-def capture_slide(html_path, output_path):
-    with sync_playwright() as p:
-        # Raspberry Pi에서 필수: --no-sandbox
-        browser = p.chromium.launch(args=['--no-sandbox', '--disable-setuid-sandbox'])
-        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
-        page.goto(f'file://{os.path.abspath(html_path)}')
-        page.wait_for_timeout(4000)  # Google Fonts + FA 로딩 대기
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        page.screenshot(path=output_path, clip={'x':0,'y':0,'width':1920,'height':1080})
-        browser.close()
+mcp__plugin_telegram_telegram__reply(
+  chat_id="<id>",
+  text="...요약 텍스트...",
+  files=["/tmp/<project>/<project>.pptx"]
+)
 ```
 
-### python-pptx 컴파일
+DM(`5270356206`)인지 그룹 토픽인지 확인 후 `chat_id`/`message_thread_id`를 정확히 넘긴다.
 
-```python
-from pptx import Presentation
-from pptx.util import Inches
-import os
+---
 
-prs = Presentation()
-prs.slide_width = Inches(20)   # 1920px = 20인치 @ 96dpi
-prs.slide_height = Inches(11.25)
-for img_path in sorted(slide_images):
-    layout = prs.slide_layouts[6]  # blank layout
-    slide = prs.slides.add_slide(layout)
-    slide.shapes.add_picture(img_path, 0, 0, Inches(20), Inches(11.25))
-prs.save(output_path)
-```
+## ⚠️ 렌더링 규칙 (절대 어기지 말 것)
 
-### ⚠️ 렌더링 규칙 (필수)
+### R1. 이모지 절대 금지 → Font Awesome 사용
 
-#### 1. 이모지 절대 금지 — Font Awesome 사용
-
-Raspberry Pi에는 컬러 이모지 폰트가 없어서 이모지가 빈 네모(□)로 렌더링됨.
+Raspberry Pi에는 컬러 이모지 폰트가 없어서 이모지가 빈 네모(□)로 렌더링됨. **SVG `<text>` 안에 이모지 넣는 건 특히 금지** (지난번 슬라이드 흐름도가 깨진 진짜 원인).
 
 ```html
 <!-- ❌ 금지 -->
-<div class="icon">&#x1F4E1;</div>
-<div class="icon">📡</div>
+<div>📡 신호</div>
+<svg><text>🤖 Agent</text></svg>
 
-<!-- ✅ 올바른 방법: Font Awesome CDN -->
+<!-- ✅ 올바른 방법 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<div class="icon"><i class="fa-solid fa-microchip"></i></div>
+<div><i class="fa-solid fa-satellite-dish"></i> 신호</div>
 ```
 
-Font Awesome CDN을 `<style>` 태그 밖에 `<link>` 태그로 추가:
-```html
-<style>
-  @import url('https://fonts.googleapis.com/...');
-</style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  /* 나머지 스타일 */
-</style>
-```
-
-#### 2. 코드 블록에 한글 주석 금지
+### R2. 코드블록 안에 한글 주석 금지
 
 JetBrains Mono는 한글을 지원하지 않음 → `font-family: 'JetBrains Mono', monospace` 요소 안에 한글 넣으면 □□□□ 렌더링.
 
 ```html
-<!-- ❌ 금지 -->
-<div class="code-block" style="font-family: 'JetBrains Mono', monospace">
-  // 텔레그램 메시지 파싱
-</div>
+<!-- ❌ -->
+<div style="font-family: 'JetBrains Mono', monospace">// 텔레그램 메시지 파싱</div>
 
-<!-- ✅ 해결책 1: 영문 주석 사용 -->
-// parse telegram message
+<!-- ✅ 영문 주석 -->
+<div style="font-family: 'JetBrains Mono', monospace">// parse telegram message</div>
 
-<!-- ✅ 해결책 2: 폰트 폴백 추가 -->
+<!-- ✅ 또는 폰트 폴백 추가 -->
 font-family: 'JetBrains Mono', 'Noto Sans KR', monospace;
 ```
 
-#### 3. 한글 폰트 반드시 지정
+### R3. 한글 폰트 반드시 지정
 
 ```html
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Inter:wght@300;400;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
-  body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Noto+Sans+KR:wght@300;400;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
 </style>
 ```
 
-Noto Sans KR은 항상 Inter 폴백으로 포함해야 함.
+Noto Sans KR은 항상 Inter 폴백으로 같이 임포트.
 
-#### 4. 슬라이드 크기 고정
+### R4. 슬라이드 크기 고정
 
 ```css
 body { width: 1920px; height: 1080px; overflow: hidden; }
-.slide { width: 1920px; height: 1080px; }
 ```
 
-### 디자인 가이드 (glassmorphism dark 테마)
+`overflow: hidden` 대신 `auto`/`visible` 쓰면 안 됨. 잘리면 잘린 걸 보고 인지해야 한다.
+
+### R5. 1080px 오버플로우 가드
+
+콘텐츠가 1080을 넘기면 PNG 하단부터 잘려 나간다. 다음 패턴으로 방어:
+- 큰 섹션을 `display:flex; height:780px` 같이 명시적 높이로 박는다
+- 카드 안 텍스트는 `font-size`를 14~16px로 잡고 `line-height: 1.6~1.8`
+- 슬라이드당 카드 6개 이상 들어가면 grid로 강제 정렬
+- 의심스러우면 첫 슬라이드 1장 먼저 렌더링해서 Read로 확인 → OK 나오면 나머지 진행
+
+---
+
+## 🎨 카드 기반 파이프라인 패턴 (강제)
+
+흐름도/단계 표현 시 SVG 다이어그램 대신 **flexbox 카드 + chevron 화살표** 패턴을 사용한다. 시도했던 SVG 흐름도는 이모지 깨짐 + 정렬 어긋남으로 5번 갈아엎었음. 다음 패턴이 검증된 정답:
+
+```html
+<div style="display:flex;align-items:stretch;gap:0;">
+  <!-- Stage 1 -->
+  <div style="flex:1;background:rgba(6,182,212,0.06);border:1.5px solid rgba(6,182,212,0.2);border-radius:20px;padding:28px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+    <div style="width:72px;height:72px;border-radius:20px;background:rgba(6,182,212,0.15);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+      <i class="fa-solid fa-mobile-screen-button" style="font-size:32px;color:#06b6d4;"></i>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#06b6d4;letter-spacing:2px;margin-bottom:6px;">STEP 1</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px;">메시지 수신</div>
+    <div style="font-size:14px;color:#8b949e;line-height:1.6;">사용자가 텔레그램으로<br>메시지 또는 명령어 전송</div>
+  </div>
+
+  <!-- Chevron between stages -->
+  <div style="width:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <i class="fa-solid fa-chevron-right" style="font-size:24px;color:#4b5563;"></i>
+  </div>
+
+  <!-- Stage 2 ... 동일 패턴 -->
+</div>
+```
+
+핵심 규칙:
+- 카드는 `flex:1` 균등 분할
+- chevron은 `width:40px; flex-shrink:0`
+- 카드별로 색상만 바꿔서 단계 구분 (`#06b6d4 → #8b5cf6 → #6366f1 → #f59e0b → #3fb950`)
+- 단계 5개가 표준. 6개 이상이면 줄 바꿈 (2단 grid)
+
+---
+
+## 🧰 디자인 시스템 (글래스모피즘 다크 테마)
 
 ```css
 /* 배경 */
 background: linear-gradient(135deg, #0a0e1a 0%, #0d1530 50%, #080c1e 100%);
 
+/* 상단 바 */
+.top-bar { position:absolute; top:0; left:0; right:0; height:4px;
+  background: linear-gradient(90deg, #6366f1, #06b6d4); }
+
 /* 카드 */
 background: rgba(255,255,255,0.03~0.06);
 border: 1px solid rgba(255,255,255,0.07~0.1);
 border-radius: 18~28px;
-box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 
 /* 색상 팔레트 */
---indigo: #6366f1;
---cyan: #06b6d4;
---purple: #8b5cf6;
---light-indigo: #a5b4fc;
---light-cyan: #67e8f9;
---light-purple: #c4b5fd;
+--cyan:        #06b6d4;   --light-cyan:   #67e8f9;
+--indigo:      #6366f1;   --light-indigo: #a5b4fc;
+--purple:      #8b5cf6;   --light-purple: #c4b5fd;
+--amber:       #f59e0b;
+--green:       #3fb950;
+--red:         #f85149;
+--text-main:   #e6edf3;
+--text-muted:  #8b949e;
+--text-faint:  #4b5563;
 
-/* 상단/하단 그라디언트 바 */
-top-bar: linear-gradient(90deg, #6366f1, #06b6d4); /* 4px */
-bottom-bar: linear-gradient(90deg, #8b5cf6, #6366f1); /* 3px */
+/* 폰트 사이즈 스케일 */
+H1(title):       44~54px / weight 800
+H1 sub:          20~22px / color #8b949e
+section heading: 18~24px / weight 700
+body:            14~16px / line-height 1.6~1.8
+mono caption:    12~13px / JetBrains Mono
 ```
 
-### Obsidian 저장 경로
+---
 
-- jongdeug: `~/.claude/channels/telegram/jongdeug/obsidian/Project/`
+## 🔁 단일 슬라이드 재생성 워크플로우
+
+8장 중 한 장만 마음에 안 들 때:
+
+1. 해당 HTML만 수정 (`slide05.html`)
+2. 그 한 장만 렌더링:
+   ```bash
+   NODE_PATH=/home/jongdeug/.claude/channels/telegram/jongdeug/scripts/node_modules \
+     node /tmp/<project>/render.js --only 5
+   ```
+3. Read로 PNG 확인
+4. PPTX 재컴파일:
+   ```bash
+   python3 /tmp/<project>/compile.py
+   ```
+5. 텔레그램으로 새 PPTX 전송 (수정된 부분 명시)
+
+`render.js`는 `--only N` 플래그를 지원해서 특정 번호만 다시 그린다.
+
+---
+
+## 🏷 종환님 PC 특화 메타데이터
+
+| 항목 | 값 |
+|---|---|
+| Playwright 모듈 위치 | `/home/jongdeug/.claude/channels/telegram/jongdeug/scripts/node_modules` |
+| 호출 시 환경변수 | `NODE_PATH=...scripts/node_modules` (필수) |
+| Chromium 옵션 | `--no-sandbox --disable-setuid-sandbox` (Raspberry Pi 필수) |
+| 출력 디렉터리 | `/tmp/<project>/screenshots/` |
+| PPTX 슬라이드 크기 | 20" × 11.25" (= 1920×1080 @ 96dpi) |
+| 텔레그램 DM (jongdeug) | `chat_id: 5270356206` |
+| 텔레그램 DM (0deug)    | `chat_id: 8662519641` |
+| 개발 그룹              | `chat_id: -1003593346551` |
+| 작가 그룹              | `chat_id: -1003766203279` |
+| Python PPTX 라이브러리 | `python3 -c "import pptx"` 로 확인 후 사용 |
+
+---
+
+## 📋 풀 워크플로우 체크리스트
+
+```
+[ ] 1. 작업 디렉터리 mkdir + 템플릿 복사
+[ ] 2. 슬라이드 outline 사용자에게 보여주고 OK 받기
+[ ] 3. slide01.html 작성 (디자인 토큰 확정)
+[ ] 4. slide01만 먼저 렌더링 → Read로 확인 → 톤 OK 확인
+[ ] 5. slide02 ~ slideNN 작성
+[ ] 6. 전체 렌더링
+[ ] 7. ⭐ 모든 PNG를 Read로 확인 (Visual QA)
+[ ] 8. 이상한 슬라이드 있으면 재작업
+[ ] 9. compile.py 실행 → PPTX 생성
+[ ] 10. mcp__plugin_telegram_telegram__reply 로 PPTX 전송
+[ ] 11. 사용자에게 슬라이드 구조 한 줄씩 요약 전달
+```
+
+---
+
+## Alternative: Cloud-only AI Image Generation
+
+`/mnt/skills/public/image-generation`을 쓸 수 있는 환경(Anthropic 클라우드 등)에서만 의미 있는 경로. **종환님 로컬 머신에서는 사용 금지** — 해당 경로 자체가 없음.
+
+이 경로를 써야 한다면 아래 스타일 가이드만 참고하면 된다:
+
+| Style | Description | Best For |
+|-------|-------------|----------|
+| `glassmorphism` | Frosted glass + vibrant gradient | Tech, AI/SaaS, futuristic pitches |
+| `dark-premium` | Black + luminous accent | Premium, executive, luxury brand |
+| `gradient-modern` | Bold mesh gradient | Startups, creative agencies |
+| `neo-brutalist` | High contrast, raw, anti-design | Edgy brands, Gen-Z |
+| `3d-isometric` | Clean iso illustrations | Tech explainers, SaaS |
+| `editorial` | Magazine layouts | Annual reports, thought leadership |
+| `minimal-swiss` | Grid + Helvetica | Architecture, premium consulting |
+| `keynote` | Apple WWDC aesthetic | Product reveals, inspirational talks |
+
+워크플로우(과거 버전 보존):
+
+1. presentation-plan.json 작성 (`style`, `style_guidelines`, `slides[]`)
+2. `/mnt/skills/public/image-generation/scripts/generate.py`로 슬라이드 1장 생성
+3. 슬라이드 2부터는 직전 슬라이드를 `--reference-images`로 넘겨 일관성 유지
+4. `/mnt/skills/public/ppt-generation/scripts/generate.py`로 PPTX 컴파일
+
+종환님 머신에서는 **절대 시도하지 말 것**. 위 경로 없음.
 
 ---
 
 ## Notes
 
-### Critical Quality Guidelines
+### 핵심 품질 가이드
 
-**Prompt Engineering for Professional Results:**
-- Always use English for image prompts regardless of user's language
-- Be EXTREMELY specific about visual details - vague prompts produce generic results
-- Include exact hex color codes (e.g., #667eea not "purple")
-- Specify typography details: font weight (400/700), size hierarchy, letter-spacing
-- Describe effects precisely: "backdrop blur 20px", "drop shadow 8px blur 30% opacity"
-- Reference real design systems: "visionOS aesthetic", "Stripe website style", "Bloomberg Businessweek layout"
+- **여백을 두려워하지 말 것** — 40~60% 여백이 프리미엄 느낌의 핵심
+- **슬라이드당 한 메시지** — 카드를 6개 이상 욱여넣지 말고 다음 슬라이드로 분리
+- **타이포그래피 위계** — 헤드라인 44~54px, 본문 14~16px, 차이가 클수록 깔끔
+- **컬러 절제** — 메인 팔레트 1개 + 액센트 1~2개 (cyan/indigo/purple 묶음 권장)
+- **모든 슬라이드의 top-bar 동일** — 일관성의 가장 강력한 신호
 
-**Visual Consistency (Most Important):**
-- **Generate slides sequentially** - each slide MUST reference the previous one
-- The first slide is critical - it establishes the visual language for the entire presentation
-- In every subsequent slide prompt, explicitly state: "continuing EXACT visual style from reference image"
-- Use SAME, EXACT, MATCH keywords emphatically in prompts to enforce consistency
-- Include a `consistency_note` field in every JSON prompt after slide 1
-- If a slide looks inconsistent, regenerate it with STRONGER reference emphasis
+### 자주 하는 실수
 
-**Design Principles for Modern Aesthetics:**
-- Embrace negative space - 40-60% empty space creates premium feel
-- Limit elements per slide - one focal point, one message
-- Use depth through layering (shadows, transparency, z-depth)
-- Typography hierarchy: massive headlines (72pt+), comfortable body (18-24pt)
-- Color restraint: one primary palette, 1-2 accent colors maximum
-
-**Common Mistakes to Avoid:**
-- ❌ Generic prompts like "professional slide" - be specific
-- ❌ Too many elements/text per slide - cluttered = unprofessional
-- ❌ Inconsistent colors between slides - always reference previous slide
-- ❌ Skipping the reference image parameter - this breaks visual consistency
-- ❌ Using different design styles within one presentation
-- ❌ Generating slides in parallel - slides MUST be generated one at a time in order (slide 1 → 2 → 3 ...), never concurrently
-
-**Recommended Styles for Different Contexts:**
-- Tech product launch → `glassmorphism` or `gradient-modern`
-- Luxury/premium brand → `dark-premium` or `editorial`
-- Startup pitch → `gradient-modern` or `minimal-swiss`
-- Executive presentation → `dark-premium` or `keynote`
-- Creative agency → `neo-brutalist` or `gradient-modern`
-- Data/analytics → `minimal-swiss` or `3d-isometric`
+- ❌ SVG `<text>` 안에 이모지 넣기 → 깨짐
+- ❌ 코드블록에 한글 주석 → 사각형 깨짐
+- ❌ 슬라이드 콘텐츠 1080px 초과 → 하단 잘림
+- ❌ 매번 render.js/compile.py 새로 짜기 → 이 스킬의 scripts/ 사용
+- ❌ 렌더링 후 PNG 안 보고 PPTX 전송 → 사고남
+- ❌ playwright NODE_PATH 누락 → `Cannot find module 'playwright'`
+- ❌ slide.html 파일명 한 자리 (slide1.html) → sorted 순서 깨짐
