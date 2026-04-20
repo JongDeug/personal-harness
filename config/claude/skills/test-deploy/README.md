@@ -17,7 +17,7 @@
 | `--back` | 백엔드(프로젝트 루트) 테스트만 실행 |
 | `--front` | 프론트엔드(하위 디렉토리) 테스트만 실행 |
 | `--back --front` | 둘 다 실행, 하나의 이메일로 발송 |
-| (생략) | `--back`과 동일 |
+| (생략) | `--back --front`와 동일 (백/프론트 모두 실행) |
 
 `version` 생략 시 최신 git 태그를 자동으로 사용합니다.
 
@@ -69,20 +69,23 @@ MAIL_PASS=앱비밀번호16자리
 테스트할 **프로젝트 루트 디렉토리**에서 스크립트를 실행합니다.
 
 ```bash
-# 백엔드만 (기본)
+# 둘 다 (기본 — 플래그 생략 시)
 ~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com
+
+# 백엔드만
+~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com --back
 
 # 프론트만
 ~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com --front
 
-# 둘 다
+# 둘 다 (명시적)
 ~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com --back --front
 
 # 버전 직접 지정
 ~/.claude/skills/test-deploy/scripts/test-deploy.sh user@email.com v1.2.0 --back --front
 ```
 
-> 인자 순서는 자유입니다. 플래그 생략 시 `--back`이 기본값입니다.
+> 인자 순서는 자유입니다. 플래그 생략 시 `--back --front`가 기본값입니다 (백/프론트 모두 실행).
 
 ---
 

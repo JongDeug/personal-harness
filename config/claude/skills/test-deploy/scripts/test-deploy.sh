@@ -4,10 +4,11 @@
 # ./test-deploy.sh <recipient> [version] [--back] [--front]
 #
 # Examples:
-#   ./test-deploy.sh user@email.com                    # 백엔드만 (기본)
-#   ./test-deploy.sh user@email.com --front             # 프론트만
-#   ./test-deploy.sh user@email.com --back --front      # 둘 다
-#   ./test-deploy.sh user@email.com v1.2.0 --back       # 버전 지정
+#   ./test-deploy.sh user@email.com                    # 백/프론트 모두 (기본)
+#   ./test-deploy.sh user@email.com --back               # 백엔드만
+#   ./test-deploy.sh user@email.com --front              # 프론트만
+#   ./test-deploy.sh user@email.com --back --front       # 둘 다 (명시적)
+#   ./test-deploy.sh user@email.com v1.2.0 --back        # 버전 지정
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
@@ -28,9 +29,10 @@ for arg in "$@"; do
   esac
 done
 
-# 플래그 생략 시 --back 기본
+# 플래그 생략 시 백/프론트 모두 실행
 if [ "$RUN_BACK" = false ] && [ "$RUN_FRONT" = false ]; then
   RUN_BACK=true
+  RUN_FRONT=true
 fi
 
 if [ -z "$RECIPIENT" ]; then
