@@ -19,11 +19,16 @@ tmux send-keys -t $SESSION:devbox 'ssh devbox' C-m
 tmux new-window -t $SESSION -n staging
 tmux send-keys -t $SESSION:staging 'ssh staging' C-m
 
-# ===== Window 4: kt-starfruit-was (2개 - 좌우 분할) =====
+# ===== Window 4: kt-starfruit-was (4개 - star-1, star-2 서버당 2개씩, 타일 레이아웃) =====
 tmux new-window -t $SESSION -n kt-starfruit-was
 tmux split-window -h -t $SESSION:kt-starfruit-was
+tmux split-window -v -t $SESSION:kt-starfruit-was
+tmux split-window -v -t $SESSION:kt-starfruit-was.1
+tmux select-layout -t $SESSION:kt-starfruit-was tiled
 tmux send-keys -t $SESSION:kt-starfruit-was.1 'ssh star-1' C-m
-tmux send-keys -t $SESSION:kt-starfruit-was.2 'ssh star-2' C-m
+tmux send-keys -t $SESSION:kt-starfruit-was.2 'ssh star-1' C-m
+tmux send-keys -t $SESSION:kt-starfruit-was.3 'ssh star-2' C-m
+tmux send-keys -t $SESSION:kt-starfruit-was.4 'ssh star-2' C-m
 tmux select-pane -t $SESSION:kt-starfruit-was.1
 
 # ===== Window 5: kt-starfruit-nats (3개 - 타일 레이아웃) =====
