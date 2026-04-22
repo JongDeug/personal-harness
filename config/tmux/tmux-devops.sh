@@ -41,6 +41,10 @@ tmux send-keys -t $SESSION:kt-starfruit-nats.2 'ssh star-nats-2' C-m
 tmux send-keys -t $SESSION:kt-starfruit-nats.3 'ssh star-nats-3' C-m
 tmux select-pane -t $SESSION:kt-starfruit-nats.1
 
+# ===== Window 6: medichis =====
+tmux new-window -t $SESSION -n medichis
+tmux send-keys -t $SESSION:medichis 'ssh kt-gateway' C-m
+
 # 첫 window(r2d2)부터 시작
 tmux select-window -t $SESSION:r2d2
 tmux attach -t $SESSION
