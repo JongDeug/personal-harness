@@ -1,6 +1,6 @@
 {
-  "permissions": {
-    "defaultMode": "auto"
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
     "PostToolUse": [
@@ -35,13 +35,21 @@
     "telegram@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
+<<<<<<< HEAD
     "code-review@claude-plugins-official": true
+=======
+    "code-review@claude-plugins-official": true,
+    "oh-my-claudecode@omc": true
+>>>>>>> e1fb849 (커밋)
   },
   "extraKnownMarketplaces": {},
   "language": "Korean",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+<<<<<<< HEAD
   "skipAutoPermissionPrompt": true,
+=======
+>>>>>>> e1fb849 (커밋)
   "voiceEnabled": true,
   "editorMode": "vim"
 }
