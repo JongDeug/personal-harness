@@ -30,6 +30,7 @@ return {
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true }),
         callback = function(ev)
+          local client = vim.lsp.get_client_by_id(ev.data.client_id)
           local map = function(mode, lhs, rhs, desc)
             vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = desc })
           end
@@ -48,6 +49,27 @@ return {
           map("n", "[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, "Prev diagnostic")
           map("n", "]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, "Next diagnostic")
           map("n", "<leader>cd", vim.diagnostic.open_float, "Line diagnostics")
+
+          -- Go 특화: 저장 시 import 정리 및 포맷팅 (VS Code 스타일)
+          if client and client.name == "gopls" then
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              buffer = ev.buf,
+              callback = function()
+                local params = vim.lsp.util.make_range_params()
+                params.context = { only = { "source.organizeImports" } }
+                local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
+                for cid, res in pairs(result or {}) do
+                  for _, r in pairs(res.result or {}) do
+                    if r.edit then
+                      local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+                      vim.lsp.util.apply_workspace_edit(r.edit, enc)
+                    end
+                  end
+                end
+                vim.lsp.buf.format({ async = false })
+              end,
+            })
+          end
         end,
       })
 
