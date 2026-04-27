@@ -52,11 +52,33 @@ return {
       { "<leader>tf", "<cmd>ToggleTerm direction=float<CR>", desc = "Terminal float" },
     },
     opts = {
-      size = 14,
+      size = function(term)
+        if term.direction == "horizontal" then
+          return math.floor(vim.o.lines * 0.35)
+        elseif term.direction == "vertical" then
+          return math.floor(vim.o.columns * 0.4)
+        end
+      end,
       open_mapping = [[<C-\>]],
       shade_terminals = true,
+      shading_factor = 2,
       direction = "horizontal",
-      float_opts = { border = "curved" },
+      start_in_insert = true,
+      persist_size = true,
+      persist_mode = true,
+      float_opts = {
+        border = "curved",
+        width = function() return math.floor(vim.o.columns * 0.85) end,
+        height = function() return math.floor(vim.o.lines * 0.8) end,
+        winblend = 3,
+        title_pos = "center",
+      },
+      winbar = {
+        enabled = true,
+        name_formatter = function(term)
+          return "  Terminal #" .. term.id .. "  "
+        end,
+      },
     },
     config = function(_, opts)
       require("toggleterm").setup(opts)

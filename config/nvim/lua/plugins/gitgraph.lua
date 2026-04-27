@@ -3,10 +3,15 @@
 return {
   {
     "isakbm/gitgraph.nvim",
-    cmd = { "GitGraph", "GitGraphToggle" },
     dependencies = { "sindrets/diffview.nvim" },
     keys = {
-      { "<leader>gl", "<cmd>GitGraphToggle<CR>", desc = "Git graph (브랜치 트리)" },
+      {
+        "<leader>gl",
+        function()
+          require("gitgraph").draw({}, { all = true, max_count = 5000 })
+        end,
+        desc = "Git graph (브랜치 트리)",
+      },
     },
     opts = {
       symbols = {
