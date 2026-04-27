@@ -54,7 +54,7 @@ return {
     opts = {
       size = function(term)
         if term.direction == "horizontal" then
-          return math.floor(vim.o.lines * 0.35)
+          return math.floor(vim.o.lines * 0.28)
         elseif term.direction == "vertical" then
           return math.floor(vim.o.columns * 0.4)
         end
@@ -94,6 +94,11 @@ return {
           map("<C-j>", [[<Cmd>wincmd j<CR>]])
           map("<C-k>", [[<Cmd>wincmd k<CR>]])
           map("<C-l>", [[<Cmd>wincmd l<CR>]])
+          -- 터미널 모드에서도 바로 리사이즈
+          map("<C-Up>", [[<Cmd>resize +2<CR>]])
+          map("<C-Down>", [[<Cmd>resize -2<CR>]])
+          map("<C-Left>", [[<Cmd>vertical resize -2<CR>]])
+          map("<C-Right>", [[<Cmd>vertical resize +2<CR>]])
         end,
       })
     end,
