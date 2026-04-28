@@ -27,6 +27,26 @@ return {
     },
   },
 
+  -- Merge conflict 인라인 해결. co/ct/cb/c0, ]x/[x 매핑 자동 등록.
+  {
+    "akinsho/git-conflict.nvim",
+    version = "*",
+    event = "BufReadPre",
+    keys = {
+      { "<leader>gx", "<cmd>GitConflictListQf<CR>", desc = "Conflicts: list" },
+    },
+    opts = {
+      default_mappings = true,  -- co(ours)/ct(theirs)/cb(both)/c0(none)
+      default_commands = true,
+      disable_diagnostics = false,
+      list_opener = "copen",
+      highlights = {
+        incoming = "DiffAdd",
+        current = "DiffText",
+      },
+    },
+  },
+
   -- VS Code Diff Editor + Git Graph 하이브리드.
   {
     "sindrets/diffview.nvim",
