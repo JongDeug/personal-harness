@@ -1,7 +1,7 @@
 return {
   {
     "nvim-tree/nvim-tree.lua",
-    cmd = { "NvimTreeToggle", "NvimTreeFocus", "NvimTreeFindFile" },
+    lazy = false,
     keys = {
       { "<leader>e", "<cmd>NvimTreeToggle<CR>", desc = "Toggle file tree" },
       { "<leader>o", "<cmd>NvimTreeFocus<CR>", desc = "Focus file tree" },
@@ -30,6 +30,10 @@ return {
         filters = {
           dotfiles = false,
           custom = { "^.git$" },
+        },
+        update_focused_file = {
+          enable = true,
+          update_root = false,
         },
         git = { enable = true, ignore = false },
         actions = {
