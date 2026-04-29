@@ -35,13 +35,15 @@
     "telegram@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true
+    "code-review@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {},
   "language": "Korean",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+  "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "editorMode": "vim"
+  "model": "sonnet"
 }
