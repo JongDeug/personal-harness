@@ -24,6 +24,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/channels/telegram/scripts/telegram-stop-enforce-reply.sh"
+          }
+        ]
+      }
     ]
   }
 }
