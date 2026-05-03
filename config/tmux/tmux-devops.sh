@@ -3,7 +3,11 @@ SESSION="devops"
 
 # 이미 있으면 그냥 붙기
 if tmux has-session -t $SESSION 2>/dev/null; then
-    tmux attach -t $SESSION
+    if [ -n "$TMUX" ]; then
+        tmux switch-client -t $SESSION
+    else
+        tmux attach -t $SESSION
+    fi
     exit 0
 fi
 
@@ -55,4 +59,8 @@ tmux send-keys -t $SESSION:medichis 'ssh kt-gateway' C-m
 
 # 첫 window(r2d2)부터 시작
 tmux select-window -t $SESSION:r2d2
-tmux attach -t $SESSION
+if [ -n "$TMUX" ]; then
+    tmux switch-client -t $SESSION
+else
+    tmux attach -t $SESSION
+fi
