@@ -35,29 +35,33 @@ return {
     "3rd/diagram.nvim",
     dependencies = { "3rd/image.nvim" },
     ft = { "markdown", "mermaid" },
-    opts = {
-      integrations = {
-        require("diagram.integrations.markdown"),
-        require("diagram.integrations.neorg"),
-      },
-      renderer_options = {
-        mermaid = {
-          background = "transparent",
-          theme = "dark",
-          scale = 2,
+    -- opts 를 함수로 감싸 lazy.nvim 이 plugin 을 PATH 에 올린 뒤 평가하도록 함.
+    -- 테이블 형태로 두면 spec 파싱 시점에 require 가 호출돼 모듈을 못 찾음.
+    opts = function()
+      return {
+        integrations = {
+          require("diagram.integrations.markdown"),
+          require("diagram.integrations.neorg"),
         },
-        plantuml = {
-          charset = "utf-8",
+        renderer_options = {
+          mermaid = {
+            background = "transparent",
+            theme = "dark",
+            scale = 2,
+          },
+          plantuml = {
+            charset = "utf-8",
+          },
+          d2 = {
+            theme_id = 1,
+          },
+          gnuplot = {
+            theme = "dark",
+            size = "800,600",
+          },
         },
-        d2 = {
-          theme_id = 1,
-        },
-        gnuplot = {
-          theme = "dark",
-          size = "800,600",
-        },
-      },
-    },
+      }
+    end,
     keys = {
       { "<leader>md", "<cmd>DiagramToggle<CR>", desc = "Diagram toggle" },
     },
