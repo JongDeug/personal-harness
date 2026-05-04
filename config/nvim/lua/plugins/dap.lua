@@ -26,6 +26,26 @@ return {
       local dap = require("dap")
       local dapui = require("dapui")
 
+      dapui.setup({
+        layouts = {
+          {
+            elements = {
+              { id = "scopes",      size = 0.4 },
+              { id = "breakpoints", size = 0.2 },
+              { id = "stacks",      size = 0.2 },
+              { id = "watches",     size = 0.2 },
+            },
+            size = 40,
+            position = "left",
+          },
+          {
+            elements = { { id = "console", size = 1 } },
+            size = 12,
+            position = "bottom",
+          },
+        },
+      })
+
       -- UI 자동 열기/닫기
       dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open() end
       dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close() end
@@ -83,24 +103,5 @@ return {
   {
     "rcarriga/nvim-dap-ui",
     dependencies = { "nvim-neotest/nvim-nio" },
-    opts = {
-      layouts = {
-        {
-          elements = {
-            { id = "scopes",      size = 0.4 },
-            { id = "breakpoints", size = 0.2 },
-            { id = "stacks",      size = 0.2 },
-            { id = "watches",     size = 0.2 },
-          },
-          size = 40,
-          position = "left",
-        },
-        {
-          elements = { { id = "console", size = 1 } },
-          size = 12,
-          position = "bottom",
-        },
-      },
-    },
   },
 }
