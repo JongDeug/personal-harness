@@ -61,7 +61,10 @@ owner: jongdeug
 - **모드:** 주제 모드 기본 on / 초안 모드 선택.
 
 ### ⑤ Editor 🪄
-- **책임:** 사실·구조·가독성 검수 + **AI 티 제거**. 기존 `humanize-korean` 스킬/에이전트 체계를 활용하되, chaos 하우스 스타일(§4)과 일치시킨다. **내용 불변 원칙**(사실·주장·수치·인용·고유명사 보존, 문체·리듬만 손질).
+- **책임:** 사실·구조·가독성 검수 + **AI 티 제거**. 종환님의 **im-not-ai** 자산을 풀로 적용한다.
+- **im-not-ai 윤문 파이프라인(1인 editor가 순차 수행):** taxonomy 탐지 → playbook 윤문 → content-fidelity 내용보존 감사 → naturalness 자연스러움 검수. 참조 파일: `~/.claude/skills/humanize-korean/references/ai-tell-taxonomy.md`, `rewriting-playbook.md`(필요시 `quick-rules.md`).
+- (선택) lead 가 editor 통과본에 `humanize-korean` 스킬을 한 번 더 돌려 5인 파이프라인으로 교차검증 가능.
+- **내용 불변 원칙**(사실·주장·수치·인용·고유명사 보존, 문체·리듬만 손질). 변경률 5~30%, 과윤문 시 롤백.
 - **산출:** 최종 body_md + 최종 title/summary/topics.
 
 ### ⑥ Publisher 🚀

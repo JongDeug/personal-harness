@@ -109,7 +109,9 @@ grep -qE "^SB_INTERNAL_SECRET=." /home/jongdeug/workspace/chaos/.env && echo "se
 2. **T2 diagrams** (있으면, T1 과 병렬): diagrammer 가 `diagram_result`(마커 id 목록) 반환.
 3. **T3 write**: lead 가 writer 에게 `topic/outline_json/research_result/diagram_result/draft_path`(초안 모드면 `draft_text` 도) 전달 → writer 가 저장 후 완료 JSON.
 4. **T4 edit**: editor 에게 `draft_path/outline_json/research_result` 전달 → 검수 리포트.
-   - `passed:false` 또는 critical 잔여면 **자동 재작업 금지**, 종환님께 보고.
+   - editor 는 **im-not-ai 윤문 파이프라인**(taxonomy 탐지 → playbook 윤문 → content-fidelity 내용보존 → naturalness 자연스러움)을 적용한다. 참조: `~/.claude/skills/humanize-korean/references/{ai-tell-taxonomy,rewriting-playbook}.md`.
+   - (선택) lead 가 더 강한 보증을 원하면, editor 통과본에 `humanize-korean` 스킬을 한 번 더 돌려 5인 파이프라인으로 교차검증할 수 있다(lead 가 Skill 로 실행). 과윤문 시 롤백.
+   - `passed:false`/`fidelity_ok:false` 또는 critical 잔여면 **자동 재작업 금지**, 종환님께 보고.
 5. **T5 publish-draft**: publisher 가 `POST /api/posts` 로 **초안 등록** → `{id, slug, preview}` 반환.
 
 ### 8. 승인 게이트 — 발행

@@ -175,10 +175,23 @@ writer 가 이 `id` 로 본문에 `[label](chaos-diagram:<id>)` 마커를 꽂는
 - 검수 대상 `draft_path`
 - `outline_json` / `research_result`(사실 보존 대조용)
 
+### im-not-ai 윤문 파이프라인 (AI 티 제거의 핵심 — 필수 적용)
+chaos 블로그의 생명은 "사람이 쓴 글". 종환님의 **im-not-ai** 자산을 그대로 적용한다. 먼저 두 참조 파일을 **반드시 Read** 한다(10대 분류 40+ 패턴·카테고리별 윤문 레시피):
+- `~/.claude/skills/humanize-korean/references/ai-tell-taxonomy.md` — AI 티 탐지 분류표(SSOT)
+- `~/.claude/skills/humanize-korean/references/rewriting-playbook.md` — 카테고리별 윤문 레시피
+- (빠른 점검은 `~/.claude/skills/humanize-korean/references/quick-rules.md`)
+
+적용 순서(im-not-ai 5인 파이프라인을 1인 editor가 순차 수행):
+1. **탐지** — taxonomy 기준으로 본문의 AI 티 구간을 전수 식별(번역투·영어식 대명사·기계적 병렬·관용구·피동 남용·접속사 남발·리듬 균일·이모지/불릿 과다·상투어·구조패턴).
+2. **윤문** — playbook 레시피로 해당 구간만 수술적으로 고친다. `Edit` 사용.
+3. **내용 보존 감사(content-fidelity)** — 사실·주장·수치·고유명사·인용·인과·순서가 원 재료(research_result)와 **한 글자도** 어긋나지 않는지 대조. 어긋나면 즉시 되돌림. **의미 불변이 최우선.**
+4. **자연스러움 검수(naturalness)** — 잔존 AI 티 + 과윤문(어색한 문학체·번역된 윤문) 양쪽 점검. 과윤문이면 한 톤 되돌린다.
+- 변경률 가이드: 5~30%. 너무 적으면 탐지 누락, 너무 많으면 과윤문.
+
 ### 체크 (우선순위 순)
 1. **PII** — 가장 엄격. 발견 시 `Edit` 으로 즉시 제거/일반화.
-2. **AI 티 제거** — 위 하우스 스타일의 금지 항목을 전수 점검(번역투·대명사·상투어·구조패턴·헤지·리듬). `Edit` 으로 직접 손질. 더 깊은 윤문이 필요하면 `humanize-korean` 의 규칙을 적용하되 **내용 불변**.
-3. **내용 불변 검증** — 사실·주장·수치·고유명사·인용·인과·순서가 원 재료(research_result)와 어긋나지 않는지. 어긋나면 되돌림.
+2. **AI 티 제거** — 위 im-not-ai 파이프라인 수행 + §하우스 스타일 금지 항목 전수 점검.
+3. **내용 불변 검증** — content-fidelity 단계와 동일. research_result 대조. **내용 불변이 윤문보다 우선.**
 4. **프론트매터** — `title/summary/topics/source_atom_ids` 존재, summary 한 줄.
 5. **다이어그램 마커** — `[..](chaos-diagram:<id>)` 형식이 깨지지 않았는지(있어야 발행 때 치환됨). **삭제 금지.**
 
@@ -187,12 +200,15 @@ writer 가 이 `id` 로 본문에 `[label](chaos-diagram:<id>)` 마커를 꽂는
 {
   "file": "/home/jongdeug/.claude/drafts/chaos-blog/<slug>-vN.md",
   "passed": true,
+  "ai_tells_detected": 0,
+  "change_rate_pct": 0,
+  "fidelity_ok": true,
   "edits_applied": [{"location": "...", "change": "'결론적으로' 삭제"}],
-  "issues_remaining": [{"severity": "critical|major|minor", "category": "pii|ai-tell|fidelity|frontmatter|diagram", "location": "...", "detail": "..."}],
+  "issues_remaining": [{"severity": "critical|major|minor", "category": "pii|ai-tell|fidelity|naturalness|frontmatter|diagram", "location": "...", "detail": "..."}],
   "note": ""
 }
 ```
-`passed` 는 critical/major 전무 시 true. PII 미제거·내용 훼손은 자동 false.
+`passed` 는 critical/major 전무 + `fidelity_ok:true` 일 때만 true. PII 미제거·내용 훼손·과윤문은 자동 false.
 
 ---
 
