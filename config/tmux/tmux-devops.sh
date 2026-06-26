@@ -23,13 +23,18 @@ tmux send-keys -t $SESSION:devbox 'ssh devbox' C-m
 tmux new-window -t $SESSION -n staging
 tmux send-keys -t $SESSION:staging 'ssh staging' C-m
 
-# ===== Window 4: kt-star-was-deploy (2개 - star-1, star-2 서버당 1개씩) =====
+# ===== Window 4: kt-star-was-deploy (2개 - 위 star-1 / 아래 star-2, 칸 위 호스트 라벨) =====
+DEPLOY_WIN="$SESSION:kt-star-was-deploy"
 tmux new-window -t $SESSION -n kt-star-was-deploy
-tmux split-window -h -t $SESSION:kt-star-was-deploy
-tmux select-layout -t $SESSION:kt-star-was-deploy tiled
-tmux send-keys -t $SESSION:kt-star-was-deploy.1 'ssh star-1' C-m
-tmux send-keys -t $SESSION:kt-star-was-deploy.2 'ssh star-2' C-m
-tmux select-pane -t $SESSION:kt-star-was-deploy.1
+tmux split-window -v -t "$DEPLOY_WIN"
+tmux select-layout -t "$DEPLOY_WIN" even-vertical
+tmux set-option -w -t "$DEPLOY_WIN" pane-border-status top
+tmux set-option -w -t "$DEPLOY_WIN" pane-border-format ' #{@host} '
+tmux set-option -p -t "$DEPLOY_WIN.1" @host star-1
+tmux set-option -p -t "$DEPLOY_WIN.2" @host star-2
+tmux send-keys -t "$DEPLOY_WIN.1" 'ssh star-1' C-m
+tmux send-keys -t "$DEPLOY_WIN.2" 'ssh star-2' C-m
+tmux select-pane -t "$DEPLOY_WIN.1"
 
 # ===== Window 5: kt-star-was-log (8개 - 2행 4열, 윗줄 star-1 x4 / 아랫줄 star-2 x4, 로그 확인용) =====
 LOG_WIN="$SESSION:kt-star-was-log"
