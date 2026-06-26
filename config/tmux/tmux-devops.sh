@@ -31,17 +31,26 @@ tmux send-keys -t $SESSION:kt-star-was-deploy.1 'ssh star-1' C-m
 tmux send-keys -t $SESSION:kt-star-was-deploy.2 'ssh star-2' C-m
 tmux select-pane -t $SESSION:kt-star-was-deploy.1
 
-# ===== Window 5: kt-star-was-log (4개 - star-1, star-2 서버당 2개씩, 로그 확인용, 타일 레이아웃) =====
+# ===== Window 5: kt-star-was-log (8개 - 2행 4열, 윗줄 star-1 x4 / 아랫줄 star-2 x4, 로그 확인용) =====
+LOG_WIN="$SESSION:kt-star-was-log"
 tmux new-window -t $SESSION -n kt-star-was-log
-tmux split-window -h -t $SESSION:kt-star-was-log
-tmux split-window -v -t $SESSION:kt-star-was-log
-tmux split-window -v -t $SESSION:kt-star-was-log.1
-tmux select-layout -t $SESSION:kt-star-was-log tiled
-tmux send-keys -t $SESSION:kt-star-was-log.1 'ssh star-1' C-m
-tmux send-keys -t $SESSION:kt-star-was-log.2 'ssh star-1' C-m
-tmux send-keys -t $SESSION:kt-star-was-log.3 'ssh star-2' C-m
-tmux send-keys -t $SESSION:kt-star-was-log.4 'ssh star-2' C-m
-tmux select-pane -t $SESSION:kt-star-was-log.1
+# 4개 칼럼으로 균등 분할
+tmux split-window -h -t "$LOG_WIN"
+tmux split-window -h -t "$LOG_WIN"
+tmux split-window -h -t "$LOG_WIN"
+tmux select-layout -t "$LOG_WIN" even-horizontal
+# 각 칸 위에 호스트 라벨 표시 (pane user option 으로 박아 ssh 원격이 터미널 제목을 덮어써도 유지)
+tmux set-option -w -t "$LOG_WIN" pane-border-status top
+tmux set-option -w -t "$LOG_WIN" pane-border-format ' #{@host} '
+# 각 칼럼을 위/아래로 나눠 윗줄 star-1, 아랫줄 star-2 (pane_id로 추적해 split 후 번호 변동에 안전)
+for col in $(tmux list-panes -t "$LOG_WIN" -F '#{pane_left} #{pane_id}' | sort -n | awk '{print $2}'); do
+    bottom=$(tmux split-window -v -t "$col" -P -F '#{pane_id}')
+    tmux set-option -p -t "$col" @host star-1
+    tmux set-option -p -t "$bottom" @host star-2
+    tmux send-keys -t "$col" 'ssh star-1' C-m
+    tmux send-keys -t "$bottom" 'ssh star-2' C-m
+done
+tmux select-pane -t "$LOG_WIN.1"
 
 # ===== Window 6: kt-starfruit-nats (3개 - 타일 레이아웃) =====
 tmux new-window -t $SESSION -n kt-starfruit-nats
