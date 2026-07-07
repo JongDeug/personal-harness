@@ -2,6 +2,9 @@
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -63,9 +66,6 @@
       }
     }
   },
-  "permissions": {
-    "defaultMode": "bypassPermissions"
-  },
   "language": "Korean",
   "effortLevel": "xhigh",
   "tui": "fullscreen",
@@ -74,6 +74,5 @@
   "theme": "dark",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "model": "claude-fable-5[1m]"
+  "voiceEnabled": true
 }
