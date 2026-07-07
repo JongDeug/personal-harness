@@ -32,14 +32,16 @@
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
-    "telegram@claude-plugins-official": true,
+    "telegram@claude-plugins-official": false,
     "gopls-lsp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
     "frontend-slides@frontend-slides": true,
     "claude-md-management@claude-plugins-official": true,
-    "andrej-karpathy-skills@karpathy-skills": true
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "humanize-korean@im-not-ai": true
   },
   "extraKnownMarketplaces": {
     "frontend-slides": {
@@ -53,13 +55,25 @@
         "source": "github",
         "repo": "forrestchang/andrej-karpathy-skills"
       }
+    },
+    "im-not-ai": {
+      "source": {
+        "source": "github",
+        "repo": "epoko77-ai/im-not-ai"
+      }
     }
   },
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
   "language": "Korean",
+  "effortLevel": "xhigh",
+  "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "effortLevel": "high"
+  "model": "claude-fable-5[1m]"
 }
