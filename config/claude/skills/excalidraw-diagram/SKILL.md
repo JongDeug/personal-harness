@@ -7,7 +7,7 @@ description: Create Excalidraw diagram JSON files that make visual arguments. Us
 
 Generate `.excalidraw` JSON files that **argue visually**, not just display information.
 
-**Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
+**Note:** PNG rendering is DISABLED for this skill. Never run the render script or create `.png` files — deliver the `.excalidraw` JSON only and self-review it (see the **Self-Review** section).
 
 ## Customization
 
@@ -200,8 +200,8 @@ Before JSON, mentally trace how the eye moves through the diagram. There should 
 ### Step 5: Generate JSON
 Only now create the Excalidraw elements. **See below for how to handle large diagrams.**
 
-### Step 6: Render & Validate (MANDATORY)
-After generating the JSON, you MUST run the render-view-fix loop until the diagram looks right. This is not optional — see the **Render & Validate** section below for the full process.
+### Step 6: Self-Review the JSON (no rendering)
+PNG rendering is DISABLED for this skill. Do NOT run the render script and do NOT create any `.png` files. Instead, re-read your JSON and mentally simulate the layout: overlapping coordinates, containers wide enough for their text, arrows bound to the right elements, balanced spacing. Fix issues directly in the JSON. See the **Self-Review** section below.
 
 ---
 
@@ -226,11 +226,11 @@ After all sections are in place, read through the complete JSON and check:
 - Is the overall spacing balanced, or are some sections cramped while others have too much whitespace?
 - Do IDs and bindings all reference elements that actually exist?
 
-Fix any alignment or binding issues before rendering.
+Fix any alignment or binding issues before finishing.
 
-**Phase 3: Render & validate**
+**Phase 3: Self-review**
 
-Now run the render-view-fix loop from the Render & Validate section. This is where you'll catch visual issues that aren't obvious from JSON — overlaps, clipping, imbalanced composition.
+PNG rendering is disabled — do not run the render script. Re-read the full JSON and reason about the geometry to catch overlaps, clipping, and imbalanced composition. Fix issues directly in the JSON.
 
 ### Section Boundaries
 
@@ -444,70 +444,19 @@ See `references/element-templates.md` for copy-paste JSON templates for each ele
 
 ---
 
-## Render & Validate (MANDATORY)
+## Self-Review (rendering disabled)
 
-You cannot judge a diagram from JSON alone. After generating or editing the Excalidraw JSON, you MUST render it to PNG, view the image, and fix what you see — in a loop until it's right. This is a core part of the workflow, not a final check.
+PNG rendering is turned OFF for this skill. Do NOT run `render_excalidraw.py`, do NOT install the renderer, and do NOT create any `.png` files. The `.excalidraw` JSON is the only deliverable — the user views it directly in Obsidian's Excalidraw plugin.
 
-### How to Render
+Because you cannot see a rendered image, review the JSON extra carefully by reasoning about the geometry:
 
-```bash
-cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw>
-```
+- **Overlap check**: For every pair of shapes, confirm their x/y/width/height rectangles don't unintentionally overlap. Leave clear gaps.
+- **Text fit**: Each container must be wide/tall enough for its text. Rough rule: width >= (longest line chars * fontSize * 0.6) + padding; height >= (lines * fontSize * lineHeight) + padding.
+- **Arrow bindings**: Every arrow's startBinding/endBinding must reference elements that exist, and its points should actually reach from source to target.
+- **Spacing & balance**: Similar elements evenly spaced; no large empty voids next to cramped clusters.
+- **Flow**: Trace the eye path top->bottom / left->right and confirm it matches the intended argument.
 
-This outputs a PNG next to the `.excalidraw` file. Then use the **Read tool** on the PNG to actually view it.
-
-### The Loop
-
-After generating the initial JSON, run this cycle:
-
-**1. Render & View** — Run the render script, then Read the PNG.
-
-**2. Audit against your original vision** — Before looking for bugs, compare the rendered result to what you designed in Steps 1-4. Ask:
-- Does the visual structure match the conceptual structure you planned?
-- Does each section use the pattern you intended (fan-out, convergence, timeline, etc.)?
-- Does the eye flow through the diagram in the order you designed?
-- Is the visual hierarchy correct — hero elements dominant, supporting elements smaller?
-- For technical diagrams: are the evidence artifacts (code snippets, data examples) readable and properly placed?
-
-**3. Check for visual defects:**
-- Text clipped by or overflowing its container
-- Text or shapes overlapping other elements
-- Arrows crossing through elements instead of routing around them
-- Arrows landing on the wrong element or pointing into empty space
-- Labels floating ambiguously (not clearly anchored to what they describe)
-- Uneven spacing between elements that should be evenly spaced
-- Sections with too much whitespace next to sections that are too cramped
-- Text too small to read at the rendered size
-- Overall composition feels lopsided or unbalanced
-
-**4. Fix** — Edit the JSON to address everything you found. Common fixes:
-- Widen containers when text is clipped
-- Adjust `x`/`y` coordinates to fix spacing and alignment
-- Add intermediate waypoints to arrow `points` arrays to route around elements
-- Reposition labels closer to the element they describe
-- Resize elements to rebalance visual weight across sections
-
-**5. Re-render & re-view** — Run the render script again and Read the new PNG.
-
-**6. Repeat** — Keep cycling until the diagram passes both the vision check (Step 2) and the defect check (Step 3). Typically takes 2-4 iterations. Don't stop after one pass just because there are no critical bugs — if the composition could be better, improve it.
-
-### When to Stop
-
-The loop is done when:
-- The rendered diagram matches the conceptual design from your planning steps
-- No text is clipped, overlapping, or unreadable
-- Arrows route cleanly and connect to the right elements
-- Spacing is consistent and the composition is balanced
-- You'd be comfortable showing it to someone without caveats
-
-### First-Time Setup
-If the render script hasn't been set up yet:
-```bash
-cd .claude/skills/excalidraw-diagram/references
-uv sync
-uv run playwright install chromium
-```
-
+Fix any issue directly in the JSON before finishing. When in doubt, add more whitespace — it's the safest default without a visual check.
 ---
 
 ## Quality Checklist
@@ -542,11 +491,11 @@ uv run playwright install chromium
 19. **Opacity**: `opacity: 100` for all elements (no transparency)
 20. **Container ratio**: <30% of text elements should be inside containers
 
-### Visual Validation (Render Required)
-21. **Rendered to PNG**: Diagram has been rendered and visually inspected
-22. **No text overflow**: All text fits within its container
-23. **No overlapping elements**: Shapes and text don't overlap unintentionally
-24. **Even spacing**: Similar elements have consistent spacing
-25. **Arrows land correctly**: Arrows connect to intended elements without crossing others
-26. **Readable at export size**: Text is legible in the rendered PNG
-27. **Balanced composition**: No large empty voids or overcrowded regions
+### Self-Review (No Rendering)
+21. **No render performed**: You did NOT run the render script or create a PNG.
+22. **No text overflow**: Containers are sized to fit their text (checked by geometry).
+23. **No overlapping elements**: Shape rectangles don't unintentionally overlap.
+24. **Even spacing**: Similar elements have consistent spacing.
+25. **Arrows land correctly**: Bindings reference real elements; points reach source->target.
+26. **Readable sizes**: Font sizes large enough to read (>=12 detail, >=16 labels).
+27. **Balanced composition**: No large empty voids or overcrowded regions.
