@@ -1,0 +1,16 @@
+# smug 세션 정의 — main (개발 작업 세션)
+# 실행:  smug start main   (없으면 생성 후 attach, 있으면 그냥 attach)
+#         smug stop main
+# devops 와 달리 ssh·라벨 없음 — 각 창을 해당 디렉토리에서 셸로 열고 붙기만 함.
+# 프로젝트 추가 = 창 한 줄 추가.
+session: main
+
+windows:
+  - name: starfruit
+    root: ~/Documents/tnh/starfruit-back
+
+  - name: nats
+    root: ~/Documents/nats
+
+  - name: algo
+    root: ~/Documents/algorithm
