@@ -67,7 +67,7 @@ RIGHT=(
   "$(K 'prefix g' 'lazygit')"
   "$(K 'prefix G' 'git worktree → 열면 claude 자동')"
   "$(SUBL '└ Enter=분할 · C-w=새창 · C-d=삭제')"
-  "$(K 'prefix p' 'pane 점퍼 (에이전트 목록→점프)')"
+  "$(K 'prefix p' 'window 점퍼 (에이전트 목록→점프)')"
   "$(K 'prefix r' '설정 리로드')"
   "$(K 'prefix ?' '이 치트시트')"
   ""
