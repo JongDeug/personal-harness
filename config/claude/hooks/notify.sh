@@ -6,17 +6,29 @@ set -euo pipefail
 
 INPUT=$(cat)
 MESSAGE=$(echo "$INPUT" | grep -o '"message"\s*:\s*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' | head -1 || true)
-[ -z "$MESSAGE" ] && MESSAGE="Claude Code 작업 완료"
+[ -z "$MESSAGE" ] && MESSAGE="${NOTIFY_DEFAULT_MSG:-Claude Code 작업 완료}"
+
+# NOTIFY_ONLY_BG=1 이면 "지금 보고 있는 창"은 조용히 넘김 (Stop 훅용).
+# 이 에이전트의 tmux 창이 활성 & 세션에 클라이언트가 붙어 있으면 = 사용자가 보는 중 → skip.
+if [ "${NOTIFY_ONLY_BG:-0}" = "1" ] && [ -n "${TMUX:-}" ] && command -v tmux &>/dev/null; then
+  _wa=$(tmux display -p -t "${TMUX_PANE:-}" '#{window_active}' 2>/dev/null || echo 0)
+  _sa=$(tmux display -p -t "${TMUX_PANE:-}" '#{session_attached}' 2>/dev/null || echo 0)
+  if [ "$_wa" = "1" ] && [ "$_sa" != "0" ]; then
+    exit 0
+  fi
+fi
 
 TITLE="Claude Code"
 SESSION_NAME=""
 WINDOW_NAME=""
 TMUX_CONTEXT=""
 
-# --- tmux 컨텍스트 ---
+# --- tmux 컨텍스트 (훅이 실행된 pane 기준으로 조회) ---
+WINDOW_INDEX=""
 if command -v tmux &>/dev/null && [ -n "${TMUX:-}" ]; then
-  SESSION_NAME=$(tmux display-message -p '#S' 2>/dev/null || true)
-  WINDOW_NAME=$(tmux display-message -p '#W' 2>/dev/null || true)
+  SESSION_NAME=$(tmux display-message -p -t "${TMUX_PANE:-}" '#S' 2>/dev/null || true)
+  WINDOW_NAME=$(tmux display-message -p -t "${TMUX_PANE:-}" '#W' 2>/dev/null || true)
+  WINDOW_INDEX=$(tmux display-message -p -t "${TMUX_PANE:-}" '#I' 2>/dev/null || true)
   TMUX_CONTEXT="[$SESSION_NAME:$WINDOW_NAME]"
   tmux display-message -d 5000 "$TMUX_CONTEXT $TITLE: $MESSAGE" 2>/dev/null || true
 fi
@@ -36,11 +48,17 @@ OS=$(detect_os)
 
 # --- tmux 세션 전환 명령 생성 ---
 build_tmux_switch_cmd() {
-  local cmd=""
-  if [ -n "$SESSION_NAME" ] && [ -n "$WINDOW_NAME" ]; then
-    cmd="tmux switch-client -t '${SESSION_NAME}:${WINDOW_NAME}' 2>/dev/null || tmux select-window -t '${SESSION_NAME}:${WINDOW_NAME}' 2>/dev/null"
+  local cmd="" target=""
+  # 창 index 로 정확히 지정 (이름 중복에도 안전)
+  if [ -n "$SESSION_NAME" ] && [ -n "$WINDOW_INDEX" ]; then
+    target="${SESSION_NAME}:${WINDOW_INDEX}"
+  elif [ -n "$SESSION_NAME" ] && [ -n "$WINDOW_NAME" ]; then
+    target="${SESSION_NAME}:${WINDOW_NAME}"
   elif [ -n "$SESSION_NAME" ]; then
-    cmd="tmux switch-client -t '${SESSION_NAME}' 2>/dev/null"
+    target="${SESSION_NAME}"
+  fi
+  if [ -n "$target" ]; then
+    cmd="tmux switch-client -t '${target}' 2>/dev/null || tmux select-window -t '${target}' 2>/dev/null"
   fi
   echo "$cmd"
 }
@@ -69,13 +87,13 @@ case "$OS" in
           -message "$MESSAGE" \
           -execute "bash -c '$TMUX_SWITCH_CMD'" \
           -sound default \
-          -group "claude-code" 2>/dev/null || true
+          -group "claude-${SESSION_NAME:-x}-${WINDOW_INDEX:-0}" 2>/dev/null || true
       else
         terminal-notifier \
           -title "$TITLE" \
           -message "$MESSAGE" \
           -sound default \
-          -group "claude-code" 2>/dev/null || true
+          -group "claude-${SESSION_NAME:-x}-${WINDOW_INDEX:-0}" 2>/dev/null || true
       fi
     else
       osascript -e "display notification \"$MESSAGE\" with title \"$TITLE ${TMUX_CONTEXT}\"" 2>/dev/null || true

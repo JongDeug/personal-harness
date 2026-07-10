@@ -28,6 +28,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [[ \"$(uname)\" == \"Darwin\" ]]; then B=~/Documents; else B=~/workspace; fi; NOTIFY_ONLY_BG=1 NOTIFY_DEFAULT_MSG=\"✅ 작업 완료\" bash \"$B/personal-harness/config/claude/hooks/notify.sh\"'"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
