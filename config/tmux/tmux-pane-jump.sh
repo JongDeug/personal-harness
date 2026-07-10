@@ -6,15 +6,19 @@
 set -u
 command -v fzf >/dev/null 2>&1 || { echo "fzf 가 필요합니다"; sleep 1; exit 1; }
 
-# 현재 window 는 목록에서 제외.
+# 현재 window 는 목록에서 제외. 현재 세션(보통 main)을 맨 위로 정렬.
 current=$(tmux display -p '#{session_name}:#{window_index}')
+cursess=$(tmux display -p '#{session_name}')
 
 target=$(tmux list-windows -a -F \
   '#{session_name}:#{window_index}|#{?window_bell_flag,🔔,·}#{?window_zoomed_flag,🔍,·}|#{window_name}|#{pane_current_command}|#{b:pane_current_path}|#{window_panes}' \
-  | awk -F'|' -v cur="$current" '$1 != cur {
+  | awk -F'|' -v cur="$current" -v cs="$cursess" '$1 != cur {
+      split($1, a, ":"); prio = (a[1] == cs) ? 0 : 1
       extra = ($6 > 1) ? ("·" $6 "p") : ""
-      printf "%-14s %s  %-19s %-11s %-22s %s\n", $1, $2, $3, $4, $5, extra
+      printf "%d\t%-14s %s  %-19s %-11s %-22s %s\n", prio, $1, $2, $3, $4, $5, extra
     }' \
+  | sort -s -k1,1n \
+  | cut -f2- \
   | fzf --ansi --reverse \
         --prompt="jump ▸ " \
         --header="Enter: 해당 window 로 이동  ·  🔔=대기중  🔍=zoom  ·  Np=pane 수" \
