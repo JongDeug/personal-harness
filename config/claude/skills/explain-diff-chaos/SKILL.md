@@ -10,9 +10,10 @@ description: Use when the user asks for a rich explanation of a code change, dif
 설계 SSOT: chaos 레포 `docs/explain-diff-feature.md`. explain-diff 계열의 chaos 출력 변형이다.
 (HTML 변형 `[[explain-diff]]`, Obsidian 변형 `[[explain-diff-obsidian]]`.)
 
-> [!IMPORTANT] 비공개 전용
+> [!IMPORTANT] 비공개 전용 (단, 오너 스트림·검색엔 편입)
 > diffs 는 blog 와 달리 **공개 발행이 없다.** 오너만 인앱 '개발' 탭에서 본다(회사일/민감 diff 가능).
 > 공개 URL·SEO·RSS 로 나가지 않는다. PII/사내정보는 그래도 스스로 판단해 과도 노출을 피한다.
+> 등록하면 **오너의 인앱 스트림 피드('개발' 레인)·시맨틱 검색(`search_atoms`)에 자동 편입**된다(shadow atom `ev_diff_`, 운동·식단 패턴). **개념/허브는 만들지 않는다**(conceptHints:[]) — 이 편입은 서버(create_diff/REST)가 알아서 하므로 스킬이 따로 할 일은 없다.
 
 ## 0. 프리플라이트 (등록 전 필수)
 
@@ -57,7 +58,7 @@ curl -s -o /dev/null -w "chaos-api %{http_code}\n" http://localhost:3001/api/me 
 
 ### 경로 A (우선): Chaos MCP `create_diff` 툴
 
-이 세션에 **Chaos MCP 가 연결돼 있으면**(POST /chaos/mcp, Bearer 토큰) `create_diff` 툴을 그대로 호출한다 — 토큰 인증이라 시크릿·telegramId 불필요. 인자: `{ title, body_md, summary?, repo?, base_sha?, head_sha?, branch?, pr_url?, diagrams:[{title, scene}] }`. **각 `scene` 은 `.excalidraw` 씬의 JSON 문자열**(MCP 스키마상 객체가 아니라 문자열 — Zod strip 회피). (읽기는 `list_diffs`/`get_diff`, 삭제는 `delete_diff`.) 이게 `explain-diff-chaos` 스킬과 **동일 역할의 MCP 툴**이다.
+이 세션에 **Chaos MCP 가 연결돼 있으면**(POST /chaos/mcp, Bearer 토큰) `create_diff` 툴을 그대로 호출한다 — 토큰 인증이라 시크릿·telegramId 불필요. 인자: `{ title, body_md, summary?, repo?, base_sha?, head_sha?, branch?, pr_url?, diagrams:[{title, scene}] }`. **각 `scene` 은 `.excalidraw` 씬의 JSON 문자열**(MCP 스키마상 객체가 아니라 문자열 — Zod strip 회피). (읽기 `list_diffs`/`get_diff`, 수정 `update_diff`(무중복 편집·부분갱신), 삭제 `delete_diff`.) 이게 `explain-diff-chaos` 스킬과 **동일 역할의 MCP 툴**이다.
 
 ### 경로 B (폴백): REST `POST /api/diffs` (loopback)
 
