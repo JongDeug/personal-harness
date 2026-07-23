@@ -1,6 +1,6 @@
 ---
 name: excalidraw-diagram
-description: Create Excalidraw diagram JSON files that make visual arguments. Use when the user wants to visualize workflows, architectures, or concepts.
+description: Create Excalidraw diagram JSON files in a clean draw.io / diagrams.net style (crisp shapes, solid fills, sharp corners, orthogonal connectors — not hand-drawn) that make visual arguments. Use when the user wants to visualize workflows, architectures, or concepts.
 ---
 
 # Excalidraw Diagram Creator
@@ -360,15 +360,25 @@ Colors encode information, not decoration. Every color choice should come from `
 
 ---
 
-## Modern Aesthetics
+## Visual Style: **draw.io-Clean (DEFAULT)**
 
-For clean, professional diagrams:
+산출물은 Excalidraw JSON 이지만 **draw.io / diagrams.net 로 그린 것처럼** 반듯하고 정형화돼야 한다 — 손그림(sketchy) 룩이 아니다. 사용자가 명시적으로 "손그림/스케치 느낌"을 요청할 때만 예외.
 
-### Roughness
-- `roughness: 0` — Clean, crisp edges. Use for modern/technical diagrams.
-- `roughness: 1` — Hand-drawn, organic feel. Use for brainstorming/informal diagrams.
+draw.io 시그니처 = 아래를 **전부** 지킬 것 (색은 `references/color-palette.md` = draw.io 팔레트가 SSOT):
 
-**Default to 0** for most professional use cases.
+1. **`roughness: 0`** — 모든 요소. 반듯한 선. (절대 `roughness: 1` 금지, 손그림 요청 시 제외)
+2. **`fillStyle: "solid"`, `opacity: 100`** — 해칭·투명 금지. 연한 fill + 진한 stroke 쌍(팔레트).
+3. **샤프한 90° 모서리** — 사각형 `"roundness": null`. 둥근 모서리는 의도적 "soft" 노드에만.
+4. **산세리프 소형 폰트** — 라벨/제목 `fontFamily: 2`(Helvetica 계열), 코드·ID·SQL·값만 `fontFamily: 3`(mono). `fontSize` 13~16 소형·일관, 제목만 20~24. 손그림 폰트 `fontFamily: 1` **금지**.
+5. **얇은 균일 선** — `strokeWidth: 1`(선·부차) ~ `2`(노드·주요 흐름).
+6. **진한 회색 텍스트 `#333333`** — pastel fill 위에서도 유지(흰 글씨 X).
+7. **그리드 정렬 레이아웃** — x/y/width/height 를 20px 그리드에 스냅하고 박스 모서리를 깔끔한 행/열로 정렬. jitter 없음.
+
+### Connectors (draw.io 라우팅)
+
+- **직선(2-point) 화살표가 기본.** `points: [[0,0],[dx,dy]]`, `roundness: null`, `endArrowhead: "arrow"`.
+- 박스를 우회하거나 계층/분기를 표현할 때만 **직교(elbow)**: `points` 에 90° 꺾임점을 넣어 수평→수직으로 라우팅. L자 `[[0,0],[dx,0],[dx,dy]]`, Z자 `[[0,0],[dx/2,0],[dx/2,dy],[dx,dy]]`. **대각 꺾임은 피한다.**
+- 화살표 `strokeColor` = 출발 노드의 stroke 색(팔레트 쌍) 또는 `#333333`. 비활성 연결은 `strokeStyle: "dashed"`.
 
 ### Stroke Width
 - `strokeWidth: 1` — Thin, elegant. Good for lines, dividers, subtle connections.
@@ -418,7 +428,7 @@ Position alone doesn't show relationships. If A relates to B, there must be an a
 }
 ```
 
-Settings: `fontSize: 16`, `fontFamily: 3`, `textAlign: "center"`, `verticalAlign: "middle"`
+Settings: `fontSize: 14`, `fontFamily: 2` (산세리프 — draw.io 기본; 코드/값만 `3` mono), `textAlign: "center"`, `verticalAlign: "middle"`
 
 ---
 
@@ -486,8 +496,8 @@ Fix any issue directly in the JSON before finishing. When in doubt, add more whi
 
 ### Technical
 16. **Text clean**: `text` contains only readable words
-17. **Font**: `fontFamily: 3`
-18. **Roughness**: `roughness: 0` for clean/modern (unless hand-drawn style requested)
+17. **Font (draw.io)**: `fontFamily: 2` (산세리프) for labels; `fontFamily: 3` (mono) only for code/IDs/values
+18. **draw.io look**: `roughness: 0` · `fillStyle: "solid"` · rectangles `"roundness": null` (샤프) · 팔레트 fill/stroke 쌍 · 텍스트 `#333333` · 커넥터 직선 또는 직교(대각 X) · 20px 그리드 정렬
 19. **Opacity**: `opacity: 100` for all elements (no transparency)
 20. **Container ratio**: <30% of text elements should be inside containers
 

@@ -111,9 +111,10 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "boundElements": [{"id": "text1", "type": "text"}],
   "link": null,
   "locked": false,
-  "roundness": {"type": 3}
+  "roundness": null
 }
 ```
+> draw.io 미감 = **샤프한 90° 모서리**이므로 `"roundness": null`. 둥근 모서리(`{"type": 3}`)는 의도적으로 "soft" 노드를 강조할 때만.
 
 ## Text (centered in shape)
 ```json
